@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head th:replace="layout/main :: head">
+    <title>Products - Zeus IMS</title>
+</head>
+<body>
+    <nav th:replace="layout/main :: navbar"></nav>
+
+    <main class="container-fluid py-4">
+        <div th:replace="layout/main :: alerts"></div>
+
+        <div class="row mb-4">
+            <div class="col-md-6">
+                <h1 class="h3 mb-3">
+                    <i class="fas fa-box me-2 text-primary"></i>Products Management
+                </h1>
+                <p class="text-muted">Manage your product catalog and spare parts</p>
+            </div>
+            <div class="col-md-6 text-end">
+                <a th:href="@{/products/new}" class="btn btn-primary" sec:authorize="hasAnyAuthority('OWNER', 'SALES')">
+                    <i class="fas fa-plus me-1"></i>Add New Product
+                </a>
+            </div>
+        </div>
+
+        <div class="row mb-4">
+            <div class="col-md-8">
+                <form th:action="@{/products}" method="get" class="d-flex">
+                    <input type="search" name="search" class="form-control me-2"
+                           placeholder="Search products by name, model, brand, category..."
+                           th:value="${search}">
+                    <button type="submit" class="btn btn-outline-primary">
+                        <i class="fas fa-search"></i>
+                    </button>
+                    <a th:href="@{/products}" class="btn btn-outline-secondary ms-2" th:if="${search}">
+                        <i class="fas fa-times"></i>
+                    </a>
+                </form>
+            </div>
+            <div class="col-md-4 text-end">
+                <div class="d-flex justify-content-end gap-3">
+                    <div class="text-center">
+                        <div class="fw-bold text-primary" th:text="${totalProducts}">0</div>
+                        <small class="text-muted">Total Products</small>
+                    </div>
+                    <div class="text-center">
+                        <div class="fw-bold text-success" th:text="${activeProducts}">0</div>
+                        <small class="text-muted">Active Products</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card border-0 shadow-sm">
+            <div class="card-body p-0">
+                <div class="table-responsive" th:if="${products != null and !products.empty}">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th class="border-0 px-4 py-3">Product</th>
+                                <th class="border-0 py-3">Brand</th>
+                                <th class="border-0 py-3">Category</th>
+                                <th class="border-0 py-3">Parts</th>
+                                <th class="border-0 py-3">Files</th>
+                                <th class="border-0 py-3">Status</th>
+                                <th class="border-0 py-3 text-end">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="product : ${products}">
+                                <td class="px-4 py-3">
+                                    <div class="d-flex align-items-center">
+                                        <div class="me-3">
+                                            <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center"
+                                                 style="width: 40px; height: 40px;">
+                                                <i class="fas fa-box"></i>
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <h6 class="mb-1" th:text="${product.displayName}">Product Name</h6>
+                                            <small class="text-muted" th:text="${product.description}" th:if="${product.description}">
+                                                Product Description
+                                            </small>
+                                            <div th:if="${product.modelNumber}" class="mt-1">
+                                                <small class="badge bg-light text-dark" th:text="'Model: ' + ${product.modelNumber}">
+                                                    Model Number
+                                                </small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="py-3">
+                                    <span th:text="${product.brand ?: 'N/A'}" class="text-muted">Brand</span>
+                                </td>
+                                <td class="py-3">
+                                    <span th:text="${product.category ?: 'N/A'}" class="text-muted">Category</span>
+                                </td>
+                                <td class="py-3">
+                                    <span class="badge bg-info" th:text="${product.activePartsCount} + ' parts'">0 parts</span>
+                                </td>
+                                <td class="py-3">
+                                    <div th:if="${product.hasFiles()}">
+                                        <i class="fas fa-paperclip text-success" title="Has attached files"></i>
+                                    </div>
+                                    <div th:unless="${product.hasFiles()}">
+                                        <i class="fas fa-minus text-muted" title="No files"></i>
+                                    </div>
+                                </td>
+                                <td class="py-3">
+                                    <span th:if="${product.active}" class="badge bg-success">Active</span>
+                                    <span th:unless="${product.active}" class="badge bg-secondary">Inactive</span>
+                                </td>
+                                <td class="py-3 text-end">
+                                    <div class="btn-group" role="group">
+                                        <a th:href="@{/products/{id}(id=${product.id})}"
+                                           class="btn btn-outline-primary btn-sm" title="View Details">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        <a th:href="@{/products/{id}/parts(id=${product.id})}"
+                                           class="btn btn-outline-info btn-sm" title="Manage Parts"
+                                           sec:authorize="hasAnyAuthority('OWNER', 'SALES', 'PRODUCTION')">
+                                            <i class="fas fa-cogs"></i>
+                                        </a>
+                                        <a th:href="@{/products/{id}/edit(id=${product.id})}"
+                                           class="btn btn-outline-warning btn-sm" title="Edit"
+                                           sec:authorize="hasAnyAuthority('OWNER', 'SALES')">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        <button type="button" class="btn btn-outline-secondary btn-sm"
+                                                th:data-product-id="${product.id}"
+                                                onclick="toggleStatus(this.dataset.productId)"
+                                                title="Toggle Status"
+                                                sec:authorize="hasAnyAuthority('OWNER', 'SALES')">
+                                            <i class="fas fa-toggle-on" th:if="${product.active}"></i>
+                                            <i class="fas fa-toggle-off" th:unless="${product.active}"></i>
+                                        </button>
+                                        <button type="button" class="btn btn-outline-danger btn-sm"
+                                                th:data-product-id="${product.id}"
+                                                th:data-product-name="${product.name}"
+                                                onclick="confirmDelete(this.dataset.productId, this.dataset.productName)"
+                                                title="Delete"
+                                                sec:authorize="hasAuthority('OWNER')">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div th:if="${products == null or products.empty}" class="text-center py-5">
+                    <i class="fas fa-box fa-3x text-muted mb-3"></i>
+                    <h5 class="text-muted">No Products Found</h5>
+                    <p class="text-muted mb-4" th:if="${search}">
+                        No products match your search criteria for "<span th:text="${search}"></span>".
+                    </p>
+                    <p class="text-muted mb-4" th:unless="${search}">
+                        Get started by adding your first product to the catalog.
+                    </p>
+                    <a th:href="@{/products/new}" class="btn btn-primary" sec:authorize="hasAnyAuthority('OWNER', 'SALES')">
+                        <i class="fas fa-plus me-1"></i>Add Your First Product
+                    </a>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Delete Confirmation Modal -->
+    <div class="modal fade" id="deleteModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Confirm Deletion</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Are you sure you want to delete the product "<span id="deleteProductName"></span>"?</p>
+                    <p class="text-danger"><small>This action cannot be undone and will also delete all associated parts.</small></p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <form id="deleteForm" method="post" style="display: inline;">
+                        <input type="hidden" name="_csrf" th:value="${_csrf.token}">
+                        <button type="submit" class="btn btn-danger">Delete Product</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function confirmDelete(productId, productName) {
+            document.getElementById('deleteProductName').textContent = productName;
+            document.getElementById('deleteForm').action = '/products/' + productId + '/delete';
+            new bootstrap.Modal(document.getElementById('deleteModal')).show();
+        }
+
+        function toggleStatus(productId) {
+            const csrfToken = document.querySelector('meta[name="_csrf"]').getAttribute('content');
+            const csrfHeader = document.querySelector('meta[name="_csrf_header"]').getAttribute('content');
+
+            fetch('/products/' + productId + '/toggle-status', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'X-Requested-With': 'XMLHttpRequest',
+                    [csrfHeader]: csrfToken
+                }
+            })
+            .then(response => {
+                if (response.ok) {
+                    location.reload();
+                } else {
+                    alert('Failed to update product status');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Failed to update product status');
+            });
+        }
+    </script>
+
+    <div th:replace="layout/main :: js-bundle"></div>
+</body>
+</html>

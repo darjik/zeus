@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head th:replace="layout/main :: head">
+    <title>Enquiries - Zeus IMS</title>
+</head>
+<body>
+    <nav th:replace="layout/main :: navbar"></nav>
+
+    <main class="container-fluid py-4">
+        <div th:replace="layout/main :: alerts"></div>
+
+        <div class="row mb-4">
+            <div class="col-md-8">
+                <h1 class="h3 mb-0">
+                    <i class="fas fa-question-circle me-2 text-info"></i>Enquiries Management
+                </h1>
+                <p class="text-muted mb-0">Manage customer enquiries and track conversations</p>
+            </div>
+            <div class="col-md-4 text-end">
+                <a th:href="@{/enquiries/new}" class="btn btn-primary">
+                    <i class="fas fa-plus me-2"></i>New Enquiry
+                </a>
+            </div>
+        </div>
+
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body">
+                        <div class="row g-3">
+                            <div class="col-md-2">
+                                <div class="stats-card text-center p-3 bg-light rounded">
+                                    <div class="stats-number text-primary fw-bold fs-5" th:text="${totalEnquiries ?: 0}">0</div>
+                                    <div class="stats-label text-muted small">Total</div>
+                                </div>
+                            </div>
+                            <div class="col-md-2">
+                                <div class="stats-card text-center p-3 bg-light rounded">
+                                    <div class="stats-number text-warning fw-bold fs-5" th:text="${pendingCount ?: 0}">0</div>
+                                    <div class="stats-label text-muted small">Pending</div>
+                                </div>
+                            </div>
+                            <div class="col-md-2">
+                                <div class="stats-card text-center p-3 bg-light rounded">
+                                    <div class="stats-number text-info fw-bold fs-5" th:text="${quotedCount ?: 0}">0</div>
+                                    <div class="stats-label text-muted small">Quoted</div>
+                                </div>
+                            </div>
+                            <div class="col-md-2">
+                                <div class="stats-card text-center p-3 bg-light rounded">
+                                    <div class="stats-number text-success fw-bold fs-5" th:text="${approvedCount ?: 0}">0</div>
+                                    <div class="stats-label text-muted small">Approved</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-header bg-light">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-filter me-2"></i>Search & Filter
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <form th:action="@{/enquiries}" method="get" class="row g-3">
+                            <div class="col-md-3">
+                                <label for="search" class="form-label">Search</label>
+                                <input type="text" class="form-control" id="search" name="search"
+                                       th:value="${search}" placeholder="Search enquiries...">
+                            </div>
+                            <div class="col-md-2">
+                                <label for="customerId" class="form-label">Customer</label>
+                                <select class="form-select" id="customerId" name="customerId">
+                                    <option value="">All Customers</option>
+                                    <option th:each="customer : ${customers}"
+                                            th:value="${customer.id}"
+                                            th:text="${customer.companyName}"
+                                            th:selected="${customerId != null and customerId == customer.id}">Customer Name</option>
+                                </select>
+                            </div>
+                            <div class="col-md-2">
+                                <label for="productId" class="form-label">Product</label>
+                                <select class="form-select" id="productId" name="productId">
+                                    <option value="">All Products</option>
+                                    <option th:each="product : ${products}"
+                                            th:value="${product.id}"
+                                            th:text="${product.name}"
+                                            th:selected="${productId != null and productId == product.id}">Product Name</option>
+                                </select>
+                            </div>
+                            <div class="col-md-2">
+                                <label for="status" class="form-label">Status</label>
+                                <select class="form-select" id="status" name="status">
+                                    <option value="">All Statuses</option>
+                                    <option th:each="enquiryStatus : ${statuses}"
+                                            th:value="${enquiryStatus.name()}"
+                                            th:text="${enquiryStatus.displayName}"
+                                            th:selected="${status != null and status == enquiryStatus.name()}">Status</option>
+                                </select>
+                            </div>
+                            <div class="col-md-2">
+                                <label for="priority" class="form-label">Priority</label>
+                                <select class="form-select" id="priority" name="priority">
+                                    <option value="">All Priorities</option>
+                                    <option th:each="enquiryPriority : ${priorities}"
+                                            th:value="${enquiryPriority.name()}"
+                                            th:text="${enquiryPriority.displayName}"
+                                            th:selected="${priority != null and priority == enquiryPriority.name()}">Priority</option>
+                                </select>
+                            </div>
+                            <div class="col-md-1">
+                                <label class="form-label">&nbsp;</label>
+                                <button type="submit" class="btn btn-primary d-block w-100">
+                                    <i class="fas fa-search"></i>
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-12">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-list me-2"></i>Enquiries List
+                        </h5>
+                        <small class="text-muted" th:text="|${#lists.size(enquiries)} enquiries found|">0 enquiries found</small>
+                    </div>
+                    <div class="card-body p-0">
+                        <div th:if="${#lists.isEmpty(enquiries)}" class="text-center py-5">
+                            <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+                            <h5 class="text-muted">No enquiries found</h5>
+                            <p class="text-muted">Start by creating your first enquiry</p>
+                            <a th:href="@{/enquiries/new}" class="btn btn-primary">
+                                <i class="fas fa-plus me-2"></i>Create First Enquiry
+                            </a>
+                        </div>
+
+                        <div th:if="${not #lists.isEmpty(enquiries)}" class="table-responsive">
+                            <table class="table table-hover mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Enquiry No.</th>
+                                        <th>Customer</th>
+                                        <th>Items</th>
+                                        <th>Total Amount</th>
+                                        <th>Status</th>
+                                        <th>Priority</th>
+                                        <th>Created</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr th:each="enquiry : ${enquiries}">
+                                        <td>
+                                            <a th:href="@{/enquiries/{id}(id=${enquiry.id})}"
+                                               class="text-decoration-none fw-medium"
+                                               th:text="${enquiry.enquiryNumber}">ENQ-001</a>
+                                        </td>
+                                        <td th:text="${enquiry.customer.companyName}">Customer Name</td>
+                                        <td>
+                                            <span th:text="${enquiry.totalItems}">0</span> items
+                                        </td>
+                                        <td>
+                                            <span th:if="${enquiry.totalAmount != null and enquiry.totalAmount.compareTo(T(java.math.BigDecimal).ZERO) > 0}"
+                                                  th:text="|₹${#numbers.formatDecimal(enquiry.totalAmount, 0, 2)}|">₹0.00</span>
+                                            <span th:if="${enquiry.totalAmount == null or enquiry.totalAmount.compareTo(T(java.math.BigDecimal).ZERO) == 0}" class="text-muted">-</span>
+                                        </td>
+                                        <td>
+                                            <span class="badge"
+                                                  th:class="|badge ${enquiry.status.name() == 'PENDING' ? 'bg-warning' :
+                                                               enquiry.status.name() == 'QUOTED' ? 'bg-info' :
+                                                               enquiry.status.name() == 'APPROVED' ? 'bg-success' :
+                                                               enquiry.status.name() == 'REJECTED' ? 'bg-danger' : 'bg-secondary'}|"
+                                                  th:text="${enquiry.status.displayName}">Status</span>
+                                        </td>
+                                        <td>
+                                            <span class="badge"
+                                                  th:class="|badge ${enquiry.priority.name() == 'URGENT' ? 'bg-danger' :
+                                                               enquiry.priority.name() == 'HIGH' ? 'bg-warning' :
+                                                               enquiry.priority.name() == 'MEDIUM' ? 'bg-info' : 'bg-secondary'}|"
+                                                  th:text="${enquiry.priority.displayName}">Priority</span>
+                                        </td>
+                                        <td th:text="${#temporals.format(enquiry.createdAt, 'dd/MM/yyyy')}">01/01/2024</td>
+                                        <td>
+                                            <div class="btn-group btn-group-sm" role="group">
+                                                <a th:href="@{/enquiries/{id}(id=${enquiry.id})}"
+                                                   class="btn btn-outline-primary" title="View">
+                                                    <i class="fas fa-eye"></i>
+                                                </a>
+                                                <a th:href="@{/enquiries/{id}/edit(id=${enquiry.id})}"
+                                                   class="btn btn-outline-secondary" title="Edit">
+                                                    <i class="fas fa-edit"></i>
+                                                </a>
+                                                <button type="button" class="btn btn-outline-danger"
+                                                        title="Delete" data-bs-toggle="modal"
+                                                        th:data-bs-target="|#deleteModal${enquiry.id}|">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            </div>
+
+                                            <div class="modal fade" th:id="|deleteModal${enquiry.id}|" tabindex="-1">
+                                                <div class="modal-dialog modal-sm">
+                                                    <div class="modal-content">
+                                                        <div class="modal-header">
+                                                            <h5 class="modal-title">Confirm Delete</h5>
+                                                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                                        </div>
+                                                        <div class="modal-body">
+                                                            <p>Are you sure you want to deactivate this enquiry?</p>
+                                                        </div>
+                                                        <div class="modal-footer">
+                                                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                                            <form th:action="@{/enquiries/{id}/delete(id=${enquiry.id})}" method="post" class="d-inline">
+                                                                <button type="submit" class="btn btn-danger">Delete</button>
+                                                            </form>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <div th:replace="layout/main :: js-bundle"></div>
+</body>
+</html>

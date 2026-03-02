@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head th:replace="layout/main :: head">
+    <title>Order Tasks - Zeus IMS</title>
+</head>
+<body>
+    <nav th:replace="layout/main :: navbar"></nav>
+
+    <main class="container-fluid py-4">
+        <div th:replace="layout/main :: alerts"></div>
+
+        <div class="row mb-4">
+            <div class="col-md-6">
+                <h1 class="h3 mb-0">
+                    <i class="fas fa-tasks me-2 text-primary"></i>Order Task Management
+                </h1>
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a th:href="@{/orders}">Orders</a></li>
+                        <li class="breadcrumb-item"><a th:href="@{/orders/{id}(id=${orderId})}">Order Details</a></li>
+                        <li class="breadcrumb-item active">Tasks</li>
+                    </ol>
+                </nav>
+            </div>
+            <div class="col-md-6 text-end">
+                <form th:action="@{/orders/{orderId}/tasks/create-default(orderId=${orderId})}" method="post" class="d-inline"
+                      sec:authorize="hasAnyAuthority('OWNER', 'SALES', 'PRODUCTION_MANAGER')" th:unless="${readOnlyMode}">
+                    <button type="submit" class="btn btn-success" th:if="${tasks.size() == 0}">
+                        <i class="fas fa-plus me-1"></i>Create Default Tasks
+                    </button>
+                </form>
+                <div th:if="${readOnlyMode}" class="alert alert-info alert-sm">
+                    <i class="fas fa-eye me-1"></i>Read-only access
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-12">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-header bg-light">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-list me-2"></i>Processing Tasks
+                            <span class="badge bg-primary ms-2" th:text="${tasks.size()}">0</span>
+                        </h5>
+                    </div>
+                    <div class="card-body p-0">
+                        <div th:if="${tasks.size() > 0}">
+                            <div class="row g-0">
+                                <div class="col-lg-6 col-xl-3 mb-3" th:each="task : ${tasks}">
+                                    <div class="card border h-100 mx-2">
+                                        <div class="card-header d-flex justify-content-between align-items-start">
+                                            <div>
+                                                <h6 class="card-title mb-1">
+                                                    <i class="fas fa-cog me-2"
+                                                       th:classappend="${task.taskType == 'INTERNAL_MEETING'} ? 'text-info' : (${task.taskType == 'DESIGNING'} ? 'text-success' : (${task.taskType == 'PART_LIST'} ? 'text-warning' : (${task.taskType == 'INVENTORY_STORE_CHECK'} ? 'text-danger' : 'text-secondary')))"></i>
+                                                    <span th:text="${task.taskTypeDisplayName}">Task Type</span>
+                                                </h6>
+                                                <span class="badge"
+                                                      th:classappend="${task.status == 'PENDING'} ? 'bg-warning' : (${task.status == 'IN_PROGRESS'} ? 'bg-primary' : (${task.status == 'COMPLETED'} ? 'bg-success' : (${task.status == 'ON_HOLD'} ? 'bg-secondary' : (${task.status == 'CANCELLED'} ? 'bg-danger' : 'bg-warning'))))"
+                                                      th:text="${task.statusDisplayName}">Status</span>
+                                            </div>
+                                            <div class="dropdown">
+                                                <button class="btn btn-sm btn-outline-secondary dropdown-toggle"
+                                                        data-bs-toggle="dropdown" aria-expanded="false">
+                                                    <i class="fas fa-ellipsis-v"></i>
+                                                </button>
+                                                <ul class="dropdown-menu">
+                                                    <li>
+                                                        <a class="dropdown-item" th:href="@{/orders/{orderId}/tasks/{taskId}(orderId=${orderId}, taskId=${task.id})}">
+                                                            <i class="fas fa-eye me-2"></i>View Details
+                                                        </a>
+                                                    </li>
+                                                    <li sec:authorize="hasAnyAuthority('OWNER', 'SALES', 'PRODUCTION_MANAGER')" th:unless="${readOnlyMode}">
+                                                        <hr class="dropdown-divider">
+                                                    </li>
+                                                    <li sec:authorize="hasAnyAuthority('OWNER', 'SALES', 'PRODUCTION_MANAGER')" th:unless="${readOnlyMode}">
+                                                        <form th:action="@{/orders/{orderId}/tasks/{taskId}/status(orderId=${orderId}, taskId=${task.id})}"
+                                                              method="post" class="d-inline">
+                                                            <input type="hidden" name="status" value="IN_PROGRESS">
+                                                            <button type="submit" class="dropdown-item" th:if="${task.status != 'IN_PROGRESS' and task.status != 'COMPLETED'}">
+                                                                <i class="fas fa-play me-2"></i>Start Task
+                                                            </button>
+                                                        </form>
+                                                    </li>
+                                                    <li sec:authorize="hasAnyAuthority('OWNER', 'SALES', 'PRODUCTION_MANAGER')" th:unless="${readOnlyMode}">
+                                                        <form th:action="@{/orders/{orderId}/tasks/{taskId}/status(orderId=${orderId}, taskId=${task.id})}"
+                                                              method="post" class="d-inline">
+                                                            <input type="hidden" name="status" value="COMPLETED">
+                                                            <button type="submit" class="dropdown-item" th:if="${task.status != 'COMPLETED'}">
+                                                                <i class="fas fa-check me-2"></i>Mark Complete
+                                                            </button>
+                                                        </form>
+                                                    </li>
+                                                </ul>
+                                            </div>
+                                        </div>
+                                        <div class="card-body">
+                                            <div th:if="${task.description}" class="mb-2">
+                                                <p class="text-muted small mb-1">Description:</p>
+                                                <p class="small" th:text="${task.description}">Task description</p>
+                                            </div>
+                                            <div th:if="${task.responsiblePerson}" class="mb-2">
+                                                <p class="text-muted small mb-1">Responsible Person:</p>
+                                                <p class="small fw-bold" th:text="${task.responsiblePerson}">Person Name</p>
+                                            </div>
+                                            <div th:if="${task.dueDate}" class="mb-2">
+                                                <p class="text-muted small mb-1">Due Date:</p>
+                                                <p class="small" th:text="${#temporals.format(task.dueDate, 'dd/MM/yyyy')}">01/01/2025</p>
+                                            </div>
+                                            <div class="mb-2">
+                                                <p class="text-muted small mb-1">Documents:</p>
+                                                <span class="badge bg-secondary" th:text="${task.documentCount} + ' files'">0 files</span>
+                                            </div>
+                                            <div class="small text-muted">
+                                                Created: <span th:text="${#temporals.format(task.createdAt, 'dd/MM/yyyy HH:mm')}">01/01/2025 10:30</span>
+                                            </div>
+                                        </div>
+                                        <div class="card-footer bg-light">
+                                            <div class="d-grid">
+                                                <a th:href="@{/orders/{orderId}/tasks/{taskId}(orderId=${orderId}, taskId=${task.id})}"
+                                                   class="btn btn-outline-primary btn-sm">
+                                                    <i class="fas fa-eye me-1"></i>View Details
+                                                </a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div th:unless="${tasks.size() > 0}" class="text-center py-5">
+                            <i class="fas fa-tasks fa-3x text-muted mb-3"></i>
+                            <h5 class="text-muted">No tasks found</h5>
+                            <p class="text-muted">Create default tasks to start the order processing workflow.</p>
+                            <form th:action="@{/orders/{orderId}/tasks/create-default(orderId=${orderId})}" method="post" class="d-inline"
+                                  sec:authorize="hasAnyAuthority('OWNER', 'SALES', 'PRODUCTION_MANAGER')">
+                                <button type="submit" class="btn btn-success">
+                                    <i class="fas fa-plus me-1"></i>Create Default Tasks
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row mt-4">
+            <div class="col-12">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-header bg-light">
+                        <h6 class="card-title mb-0">
+                            <i class="fas fa-info-circle me-2"></i>Task Information
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-3">
+                                <div class="text-center">
+                                    <i class="fas fa-users fa-2x text-info mb-2"></i>
+                                    <h6>Internal Meeting</h6>
+                                    <p class="small text-muted">Team coordination and planning discussion</p>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="text-center">
+                                    <i class="fas fa-drafting-compass fa-2x text-success mb-2"></i>
+                                    <h6>Designing</h6>
+                                    <p class="small text-muted">Product design and engineering work</p>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="text-center">
+                                    <i class="fas fa-list-alt fa-2x text-warning mb-2"></i>
+                                    <h6>Part List</h6>
+                                    <p class="small text-muted">Component identification and listing</p>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="text-center">
+                                    <i class="fas fa-warehouse fa-2x text-danger mb-2"></i>
+                                    <h6>Inventory Store Check</h6>
+                                    <p class="small text-muted">Stock verification and availability</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script th:replace="layout/main :: js-bundle"></script>
+</body>
+</html>

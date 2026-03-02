@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="layout/main :: head">
+    <title th:text="${pageTitle} + ' - Zeus IMS'">Personnel Form - Zeus IMS</title>
+</head>
+<body>
+    <nav th:replace="layout/main :: navbar"></nav>
+
+    <main class="container-fluid py-4">
+        <div th:replace="layout/main :: alerts"></div>
+
+        <div class="row mb-4">
+            <div class="col-md-8">
+                <h1 class="h3 mb-0">
+                    <i class="fas fa-user-plus me-2 text-primary" th:if="!${isEdit}"></i>
+                    <i class="fas fa-user-edit me-2 text-primary" th:if="${isEdit}"></i>
+                    <span th:text="${pageTitle}">Personnel Form</span>
+                </h1>
+                <p class="text-muted">
+                    <span th:text="${isEdit ? 'Update personnel information' : 'Add new personnel for'} + ' ' + ${customer.companyName}">Form description</span>
+                </p>
+            </div>
+            <div class="col-md-4 text-end">
+                <a th:href="@{/customers/{id}/personnel(id=${customer.id})}" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left me-2"></i>Back to Personnel
+                </a>
+            </div>
+        </div>
+
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-header bg-light">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-user me-2"></i>Personnel Information
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <form th:action="${isEdit ? '/customers/' + customer.id + '/personnel/edit/' + personnelDTO.id : '/customers/' + customer.id + '/personnel/new'}"
+                              th:object="${personnelDTO}" method="post" novalidate>
+
+                            <!-- Basic Information -->
+                            <div class="row g-3 mb-4">
+                                <div class="col-12">
+                                    <h6 class="text-primary border-bottom pb-2">
+                                        <i class="fas fa-info-circle me-2"></i>Basic Information
+                                    </h6>
+                                </div>
+
+                                <div class="col-md-6">
+                                    <label for="fullName" class="form-label">Full Name <span class="text-danger">*</span></label>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="fas fa-user"></i></span>
+                                        <input type="text" class="form-control" id="fullName" th:field="*{fullName}"
+                                               th:classappend="${#fields.hasErrors('fullName')} ? 'is-invalid' : ''"
+                                               placeholder="Enter full name" required>
+                                        <div class="invalid-feedback" th:if="${#fields.hasErrors('fullName')}" th:errors="*{fullName}">
+                                            Full name error
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="col-md-6">
+                                    <label for="email" class="form-label">Email Address</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="fas fa-envelope"></i></span>
+                                        <input type="email" class="form-control" id="email" th:field="*{email}"
+                                               th:classappend="${#fields.hasErrors('email')} ? 'is-invalid' : ''"
+                                               placeholder="person@company.com">
+                                        <div class="invalid-feedback" th:if="${#fields.hasErrors('email')}" th:errors="*{email}">
+                                            Email error
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Contact Information -->
+                            <div class="row g-3 mb-4">
+                                <div class="col-12">
+                                    <h6 class="text-primary border-bottom pb-2">
+                                        <i class="fas fa-phone me-2"></i>Contact Information
+                                    </h6>
+                                </div>
+
+                                <div class="col-md-6">
+                                    <label for="contactNumber" class="form-label">Primary Contact</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="fas fa-phone"></i></span>
+                                        <input type="tel" class="form-control" id="contactNumber" th:field="*{contactNumber}"
+                                               placeholder="Primary phone number">
+                                    </div>
+                                </div>
+
+                                <div class="col-md-6">
+                                    <label for="secondaryContact" class="form-label">Secondary Contact</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="fas fa-phone-alt"></i></span>
+                                        <input type="tel" class="form-control" id="secondaryContact" th:field="*{secondaryContact}"
+                                               placeholder="Secondary phone number">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Professional Information -->
+                            <div class="row g-3 mb-4">
+                                <div class="col-12">
+                                    <h6 class="text-primary border-bottom pb-2">
+                                        <i class="fas fa-briefcase me-2"></i>Professional Information
+                                    </h6>
+                                </div>
+
+                                <div class="col-md-6">
+                                    <label for="department" class="form-label">Department</label>
+                                    <input type="text" class="form-control" id="department" th:field="*{department}"
+                                           placeholder="e.g., Sales, Engineering, Finance" list="departmentList">
+                                    <datalist id="departmentList">
+                                        <option th:each="dept : ${departments}" th:value="${dept}"></option>
+                                    </datalist>
+                                </div>
+
+                                <div class="col-md-6">
+                                    <label for="designation" class="form-label">Designation</label>
+                                    <input type="text" class="form-control" id="designation" th:field="*{designation}"
+                                           placeholder="e.g., Manager, Engineer, Director" list="designationList">
+                                    <datalist id="designationList">
+                                        <option th:each="desig : ${designations}" th:value="${desig}"></option>
+                                    </datalist>
+                                </div>
+
+                                <div class="col-12">
+                                    <label for="notes" class="form-label">Notes</label>
+                                    <textarea class="form-control" id="notes" th:field="*{notes}" rows="3"
+                                              placeholder="Additional notes about this personnel..."></textarea>
+                                </div>
+                            </div>
+
+                            <!-- Status & Settings -->
+                            <div class="row g-3 mb-4">
+                                <div class="col-12">
+                                    <h6 class="text-primary border-bottom pb-2">
+                                        <i class="fas fa-cog me-2"></i>Status & Settings
+                                    </h6>
+                                </div>
+
+                                <div class="col-md-6">
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input" type="checkbox" id="active" th:field="*{active}">
+                                        <label class="form-check-label" for="active">
+                                            <span th:if="*{active}">Active Personnel</span>
+                                            <span th:unless="*{active}">Inactive Personnel</span>
+                                        </label>
+                                    </div>
+                                    <div class="form-text">Inactive personnel are hidden from most operations</div>
+                                </div>
+
+                                <div class="col-md-6">
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input" type="checkbox" id="isPrimaryContact" th:field="*{isPrimaryContact}">
+                                        <label class="form-check-label" for="isPrimaryContact">
+                                            <span th:if="*{isPrimaryContact}">Primary Contact</span>
+                                            <span th:unless="*{isPrimaryContact}">Regular Contact</span>
+                                        </label>
+                                    </div>
+                                    <div class="form-text">Only one primary contact per customer is allowed</div>
+                                </div>
+                            </div>
+
+                            <hr class="my-4">
+
+                            <div class="d-flex justify-content-between">
+                                <a th:href="@{/customers/{id}/personnel(id=${customer.id})}" class="btn btn-outline-secondary">
+                                    <i class="fas fa-times me-2"></i>Cancel
+                                </a>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-save me-2"></i>
+                                    <span th:text="${isEdit ? 'Update Personnel' : 'Create Personnel'}">Save</span>
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Real-time validation
+        document.addEventListener('DOMContentLoaded', function() {
+            const email = document.getElementById('email');
+            const fullName = document.getElementById('fullName');
+            const isPrimaryContact = document.getElementById('isPrimaryContact');
+
+            // Email validation
+            email.addEventListener('input', function() {
+                validateEmail();
+            });
+
+            // Primary contact warning
+            isPrimaryContact.addEventListener('change', function() {
+                if (this.checked) {
+                    if (!confirm('Setting this person as primary contact will remove the primary contact status from any existing primary contact. Continue?')) {
+                        this.checked = false;
+                    }
+                }
+            });
+        });
+
+        function validateEmail() {
+            const email = document.getElementById('email');
+            const emailValue = email.value;
+
+            if (emailValue && !emailValue.includes('@')) {
+                email.classList.add('is-invalid');
+                email.classList.remove('is-valid');
+            } else if (emailValue) {
+                email.classList.remove('is-invalid');
+                email.classList.add('is-valid');
+            }
+        }
+    </script>
+</body>
+</html>
+

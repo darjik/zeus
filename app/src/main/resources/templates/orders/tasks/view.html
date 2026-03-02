@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head th:replace="layout/main :: head">
+    <title th:text="'Task: ' + ${task.taskTypeDisplayName} + ' - Zeus IMS'">Task Details - Zeus IMS</title>
+</head>
+<body>
+    <nav th:replace="layout/main :: navbar"></nav>
+
+    <main class="container-fluid py-4">
+        <div th:replace="layout/main :: alerts"></div>
+
+        <div class="row mb-4">
+            <div class="col-md-6">
+                <h1 class="h3 mb-0">
+                    <i class="fas fa-cog me-2"
+                       th:classappend="${task.taskType == 'INTERNAL_MEETING'} ? 'text-info' : (${task.taskType == 'DESIGNING'} ? 'text-success' : (${task.taskType == 'PART_LIST'} ? 'text-warning' : (${task.taskType == 'INVENTORY_STORE_CHECK'} ? 'text-danger' : 'text-secondary')))"></i>
+                    <span th:text="${task.taskTypeDisplayName}">Task Type</span>
+                </h1>
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a th:href="@{/orders}">Orders</a></li>
+                        <li class="breadcrumb-item"><a th:href="@{/orders/{id}(id=${orderId})}">Order Details</a></li>
+                        <li class="breadcrumb-item"><a th:href="@{/orders/{id}/tasks(id=${orderId})}">Tasks</a></li>
+                        <li class="breadcrumb-item active" th:text="${task.taskTypeDisplayName}">Task</li>
+                    </ol>
+                </nav>
+            </div>
+            <div class="col-md-6 text-end">
+                <div class="btn-group">
+                    <button type="button" class="btn btn-success btn-sm dropdown-toggle" data-bs-toggle="dropdown"
+                            sec:authorize="hasAnyAuthority('OWNER', 'SALES', 'PRODUCTION_MANAGER')" th:unless="${readOnlyMode}">
+                        <i class="fas fa-tasks me-1"></i>Update Status
+                    </button>
+                    <ul class="dropdown-menu">
+                        <li th:each="status : ${taskStatuses}">
+                            <form th:action="@{/orders/{orderId}/tasks/{taskId}/status(orderId=${orderId}, taskId=${task.id})}"
+                                  method="post" class="d-inline">
+                                <input type="hidden" name="status" th:value="${status}">
+                                <button type="submit" class="dropdown-item"
+                                        th:classappend="${task.status == status.name()} ? 'active'"
+                                        th:text="${status.displayName}">Status</button>
+                            </form>
+                        </li>
+                    </ul>
+                </div>
+                <div th:if="${readOnlyMode}" class="alert alert-info alert-sm mt-2">
+                    <i class="fas fa-eye me-1"></i>Read-only access
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-lg-8">
+                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-header bg-light">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-info-circle me-2"></i>Task Details
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <table class="table table-borderless">
+                                    <tr>
+                                        <td class="fw-bold">Task Type:</td>
+                                        <td th:text="${task.taskTypeDisplayName}">Internal Meeting</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="fw-bold">Status:</td>
+                                        <td>
+                                            <span class="badge"
+                                                  th:classappend="${task.status == 'PENDING'} ? 'bg-warning' : (${task.status == 'IN_PROGRESS'} ? 'bg-primary' : (${task.status == 'COMPLETED'} ? 'bg-success' : (${task.status == 'ON_HOLD'} ? 'bg-secondary' : (${task.status == 'CANCELLED'} ? 'bg-danger' : 'bg-warning'))))"
+                                                  th:text="${task.statusDisplayName}">Status</span>
+                                        </td>
+                                    </tr>
+                                    <tr th:if="${task.responsiblePerson}">
+                                        <td class="fw-bold">Responsible Person:</td>
+                                        <td th:text="${task.responsiblePerson}">Person Name</td>
+                                    </tr>
+                                    <tr th:if="${task.assignedTo}">
+                                        <td class="fw-bold">Assigned To:</td>
+                                        <td th:text="${task.assignedTo}">Assigned Person</td>
+                                    </tr>
+                                </table>
+                            </div>
+                            <div class="col-md-6">
+                                <table class="table table-borderless">
+                                    <tr th:if="${task.dueDate}">
+                                        <td class="fw-bold">Due Date:</td>
+                                        <td th:text="${#temporals.format(task.dueDate, 'dd/MM/yyyy HH:mm')}">01/01/2025 15:00</td>
+                                    </tr>
+                                    <tr th:if="${task.completedDate}">
+                                        <td class="fw-bold">Completed Date:</td>
+                                        <td th:text="${#temporals.format(task.completedDate, 'dd/MM/yyyy HH:mm')}">05/01/2025 14:30</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="fw-bold">Created:</td>
+                                        <td th:text="${#temporals.format(task.createdAt, 'dd/MM/yyyy HH:mm')}">01/01/2025 10:30</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="fw-bold">Last Updated:</td>
+                                        <td th:text="${#temporals.format(task.updatedAt, 'dd/MM/yyyy HH:mm')}">01/01/2025 15:45</td>
+                                    </tr>
+                                </table>
+                            </div>
+                        </div>
+
+                        <div class="mt-3">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <h6 class="fw-bold mb-0">Description:</h6>
+                                <button type="button" class="btn btn-outline-secondary btn-sm" id="editDescriptionBtn"
+                                        sec:authorize="hasAnyAuthority('OWNER', 'SALES', 'PRODUCTION_MANAGER')" th:unless="${readOnlyMode}">
+                                    <i class="fas fa-edit me-1"></i>Edit
+                                </button>
+                            </div>
+
+                            <!-- Read-only description display -->
+                            <div id="descriptionDisplay">
+                                <div th:if="${task.description}" class="border rounded p-3 bg-light">
+                                    <p class="mb-0" th:text="${task.description}">Task description</p>
+                                </div>
+                                <div th:unless="${task.description}" class="border rounded p-3 bg-light">
+                                    <p class="text-muted fst-italic mb-0">No description added yet. Click Edit to add task description.</p>
+                                </div>
+                            </div>
+
+                            <!-- Editable description form (hidden by default) -->
+                            <div id="descriptionEdit" style="display: none;">
+                                <form th:action="@{/orders/{orderId}/tasks/{taskId}/update(orderId=${orderId}, taskId=${task.id})}" method="post">
+                                    <div class="mb-3">
+                                        <textarea id="editDescriptionField" name="description" class="form-control" rows="6"
+                                                  th:text="${task.description}"
+                                                  placeholder="Enter task description, notes, or instructions..."></textarea>
+                                        <div class="form-text">Describe the task requirements, progress updates, or important notes.</div>
+                                    </div>
+                                    <div class="d-flex gap-2">
+                                        <button type="submit" class="btn btn-success btn-sm">
+                                            <i class="fas fa-save me-1"></i>Save Description
+                                        </button>
+                                        <button type="button" class="btn btn-secondary btn-sm" id="cancelDescriptionBtn">
+                                            <i class="fas fa-times me-1"></i>Cancel
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+
+                        <div class="mt-3" sec:authorize="hasAnyAuthority('OWNER', 'SALES', 'PRODUCTION_MANAGER')" th:unless="${readOnlyMode}">
+                            <button type="button" class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#updateTaskModal">
+                                <i class="fas fa-cog me-1"></i>Update Task Details
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card border-0 shadow-sm">
+                    <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-file me-2"></i>Task Documents
+                        </h5>
+                        <button type="button" class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#uploadDocumentModal"
+                                sec:authorize="hasAnyAuthority('OWNER', 'SALES', 'PRODUCTION_MANAGER')" th:unless="${readOnlyMode}">
+                            <i class="fas fa-upload me-1"></i>Upload Document
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        <div th:if="${documents.size() > 0}">
+                            <div class="row">
+                                <div class="col-md-6 mb-3" th:each="document : ${documents}">
+                                    <div class="card border">
+                                        <div class="card-body p-3">
+                                            <div class="d-flex justify-content-between align-items-start">
+                                                <div class="flex-grow-1">
+                                                    <h6 class="card-title mb-1" th:text="${document.documentName}">Document Name</h6>
+                                                    <p class="card-text small text-muted mb-1">
+                                                        <span class="badge bg-secondary me-1" th:text="${document.documentTypeDisplayName}">Type</span>
+                                                        <span th:text="${document.formattedFileSize}">123 KB</span>
+                                                    </p>
+                                                    <p class="card-text small text-muted" th:if="${document.description}" th:text="${document.description}">Description</p>
+                                                    <p class="card-text small text-muted">
+                                                        Uploaded by <span th:text="${document.uploadedBy}">user</span>
+                                                        on <span th:text="${#temporals.format(document.createdAt, 'dd/MM/yyyy')}">01/01/2025</span>
+                                                    </p>
+                                                </div>
+                                                <div class="dropdown">
+                                                    <button class="btn btn-sm btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown">
+                                                        <i class="fas fa-ellipsis-v"></i>
+                                                    </button>
+                                                    <ul class="dropdown-menu">
+                                                        <li>
+                                                            <a class="dropdown-item" th:href="@{/orders/{orderId}/tasks/{taskId}/documents/{documentId}/download(orderId=${orderId}, taskId=${task.id}, documentId=${document.id})}">
+                                                                <i class="fas fa-download me-2"></i>Download
+                                                            </a>
+                                                        </li>
+                                                        <li sec:authorize="hasAnyAuthority('OWNER', 'SALES', 'PRODUCTION_MANAGER')" th:unless="${readOnlyMode}">
+                                                            <form th:action="@{/orders/{orderId}/tasks/{taskId}/documents/{docId}/delete(orderId=${orderId}, taskId=${task.id}, docId=${document.id})}"
+                                                                  method="post" class="d-inline">
+                                                                <button type="submit" class="dropdown-item text-danger"
+                                                                        onclick="return confirm('Are you sure you want to delete this document?')">
+                                                                    <i class="fas fa-trash me-2"></i>Delete
+                                                                </button>
+                                                            </form>
+                                                        </li>
+                                                    </ul>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div th:unless="${documents.size() > 0}" class="text-center py-4">
+                            <i class="fas fa-file fa-3x text-muted mb-3"></i>
+                            <h6 class="text-muted">No documents uploaded</h6>
+                            <p class="text-muted small">Upload meeting notes, design documents, specifications, or other task-related files</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Task Notes Section -->
+                <div class="card border-0 shadow-sm mt-4">
+                    <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-sticky-note me-2"></i>Task Notes
+                        </h5>
+                        <button type="button" class="btn btn-outline-success btn-sm" data-bs-toggle="modal" data-bs-target="#addNoteModal"
+                                sec:authorize="hasAnyAuthority('OWNER', 'SALES', 'PRODUCTION_MANAGER')" th:unless="${readOnlyMode}">
+                            <i class="fas fa-plus me-1"></i>Add Note
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label for="taskNotes" class="form-label fw-bold">Notes & Progress Updates:</label>
+                            <div class="border rounded p-3 bg-light" id="taskNotes">
+                                <div th:if="${task.description != null and #strings.length(task.description) > 0}"
+                                     th:utext="${#strings.replace(task.description, '&#10;', '&lt;br&gt;')}">
+                                    Existing task notes and updates will appear here
+                                </div>
+                                <div th:unless="${task.description != null and #strings.length(task.description) > 0}" class="text-muted fst-italic">
+                                    No notes added yet. Use the "Add Note" button to add progress updates, meeting notes, or important observations.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-4">
+                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-header bg-light">
+                        <h6 class="card-title mb-0">
+                            <i class="fas fa-clock me-2"></i>Timeline
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="small">
+                            <div class="d-flex mb-2">
+                                <strong>Created:</strong>
+                                <span class="ms-2" th:text="${#temporals.format(task.createdAt, 'dd/MM/yyyy HH:mm')}">01/01/2025 10:30</span>
+                            </div>
+                            <div class="d-flex mb-2">
+                                <strong>Created by:</strong>
+                                <span class="ms-2" th:text="${task.createdBy}">user</span>
+                            </div>
+                            <div class="d-flex mb-2">
+                                <strong>Last updated:</strong>
+                                <span class="ms-2" th:text="${#temporals.format(task.updatedAt, 'dd/MM/yyyy HH:mm')}">01/01/2025 15:45</span>
+                            </div>
+                            <div class="d-flex">
+                                <strong>Updated by:</strong>
+                                <span class="ms-2" th:text="${task.updatedBy}">user</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card border-0 shadow-sm">
+                    <div class="card-header bg-light">
+                        <h6 class="card-title mb-0">
+                            <i class="fas fa-info-circle me-2"></i>Task Guidelines
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <div th:if="${task.taskType == 'INTERNAL_MEETING'}">
+                            <h6 class="text-info">Internal Meeting</h6>
+                            <p class="small">Coordinate with team members, discuss project requirements, and plan the execution strategy.</p>
+                            <ul class="small">
+                                <li>Review order requirements</li>
+                                <li>Assign responsibilities</li>
+                                <li>Set timeline and milestones</li>
+                                <li>Document meeting notes</li>
+                            </ul>
+                        </div>
+                        <div th:if="${task.taskType == 'DESIGNING'}">
+                            <h6 class="text-success">Designing</h6>
+                            <p class="small">Create technical designs, CAD drawings, and product specifications.</p>
+                            <ul class="small">
+                                <li>Create CAD drawings</li>
+                                <li>Design specifications</li>
+                                <li>Technical documentation</li>
+                                <li>Design reviews</li>
+                            </ul>
+                        </div>
+                        <div th:if="${task.taskType == 'PART_LIST'}">
+                            <h6 class="text-warning">Part List</h6>
+                            <p class="small">Identify and list all required components and materials for the project.</p>
+                            <ul class="small">
+                                <li>Identify required parts</li>
+                                <li>Create bill of materials</li>
+                                <li>Vendor information</li>
+                                <li>Cost estimation</li>
+                            </ul>
+                        </div>
+                        <div th:if="${task.taskType == 'INVENTORY_STORE_CHECK'}">
+                            <h6 class="text-danger">Inventory Store Check</h6>
+                            <p class="small">Verify availability of parts and materials in inventory.</p>
+                            <ul class="small">
+                                <li>Check stock levels</li>
+                                <li>Verify part availability</li>
+                                <li>Update inventory records</li>
+                                <li>Purchase requirements</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Update Task Modal -->
+        <div class="modal fade" id="updateTaskModal" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Update Task</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <form th:action="@{/orders/{orderId}/tasks/{taskId}/update(orderId=${orderId}, taskId=${task.id})}" method="post">
+                        <div class="modal-body">
+                            <div class="mb-3">
+                                <label for="status" class="form-label">Status</label>
+                                <select id="status" name="status" class="form-select">
+                                    <option th:each="status : ${taskStatuses}"
+                                            th:value="${status}"
+                                            th:text="${status.displayName}"
+                                            th:selected="${status.name() == task.status}">Status</option>
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label for="description" class="form-label">Description</label>
+                                <textarea id="description" name="description" class="form-control" rows="4" th:text="${task.description}"></textarea>
+                            </div>
+                            <div class="mb-3">
+                                <label for="responsiblePerson" class="form-label">Responsible Person</label>
+                                <input type="text" id="responsiblePerson" name="responsiblePerson" class="form-control" th:value="${task.responsiblePerson}">
+                            </div>
+                            <div class="mb-3">
+                                <label for="assignedTo" class="form-label">Assigned To</label>
+                                <input type="text" id="assignedTo" name="assignedTo" class="form-control" th:value="${task.assignedTo}">
+                            </div>
+                            <div class="mb-3">
+                                <label for="dueDate" class="form-label">Due Date</label>
+                                <input type="datetime-local" id="dueDate" name="dueDate" class="form-control"
+                                       th:value="${task.dueDate != null ? #temporals.format(task.dueDate, 'yyyy-MM-ddTHH:mm') : ''}">
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                            <button type="submit" class="btn btn-primary">Update Task</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Upload Document Modal -->
+        <div class="modal fade" id="uploadDocumentModal" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Upload Document</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <form th:action="@{/orders/{orderId}/tasks/{taskId}/documents(orderId=${orderId}, taskId=${task.id})}"
+                          method="post" enctype="multipart/form-data">
+                        <div class="modal-body">
+                            <div class="mb-3">
+                                <label for="file" class="form-label">File *</label>
+                                <input type="file" id="file" name="file" class="form-control" required>
+                                <div class="form-text">Maximum file size: 5MB. Supported formats: PDF, DOC, DOCX, XLS, XLSX, JPG, PNG, CAD files</div>
+                            </div>
+                            <div class="mb-3">
+                                <label for="documentType" class="form-label">Document Type *</label>
+                                <select id="documentType" name="documentType" class="form-select" required>
+                                    <option value="">Select Type</option>
+                                    <option th:each="type : ${documentTypes}"
+                                            th:value="${type}"
+                                            th:text="${type.displayName}">Type</option>
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label for="docDescription" class="form-label">Description</label>
+                                <textarea id="docDescription" name="description" class="form-control" rows="3"
+                                          placeholder="Brief description of the document content"></textarea>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                            <button type="submit" class="btn btn-success">
+                                <i class="fas fa-upload me-1"></i>Upload Document
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Add Note Modal -->
+        <div class="modal fade" id="addNoteModal" tabindex="-1">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Add Task Note</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <form th:action="@{/orders/{orderId}/tasks/{taskId}/update(orderId=${orderId}, taskId=${task.id})}" method="post">
+                        <div class="modal-body">
+                            <div class="mb-3">
+                                <label for="newNote" class="form-label">Add New Note</label>
+                                <textarea id="newNote" name="newNote" class="form-control" rows="6"
+                                          placeholder="Enter progress updates, meeting notes, observations, or important information about this task..."></textarea>
+                                <div class="form-text">This note will be appended to existing task description with timestamp and your name.</div>
+                            </div>
+                            <div th:if="${task.description != null && task.description.trim() != ''}" class="mb-3">
+                                <label class="form-label">Existing Notes:</label>
+                                <div class="border rounded p-3 bg-light small" style="max-height: 200px; overflow-y: auto;">
+                                    <div th:utext="${#strings.replace(task.description, '&#10;', '&lt;br&gt;')}">
+                                        Existing notes
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                            <button type="submit" class="btn btn-success">
+                                <i class="fas fa-plus me-1"></i>Add Note
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script th:replace="layout/main :: js-bundle"></script>
+    <script>
+        // Auto-resize textarea in modals
+        document.addEventListener('DOMContentLoaded', function() {
+            const textareas = document.querySelectorAll('textarea');
+            textareas.forEach(function(textarea) {
+                textarea.addEventListener('input', function() {
+                    this.style.height = 'auto';
+                    this.style.height = this.scrollHeight + 'px';
+                });
+            });
+        });
+
+        // Form validation for file upload
+        document.getElementById('uploadDocumentModal').addEventListener('submit', function(e) {
+            alert('Opening upload document modal');
+            const fileInput = document.getElementById('file');
+            const docTypeSelect = document.getElementById('documentType');
+
+            if (!fileInput.files[0]) {
+                e.preventDefault();
+                alert('Please select a file to upload');
+                return false;
+            }
+
+            if (!docTypeSelect.value) {
+                e.preventDefault();
+                alert('Please select a document type');
+                return false;
+            }
+
+            // Check file size (5MB limit)
+            if (fileInput.files[0].size > 5 * 1024 * 1024) {
+                e.preventDefault();
+                alert('File size exceeds 5MB limit');
+                return false;
+            }
+        });
+
+        // Toggle description edit mode
+        document.getElementById('editDescriptionBtn').addEventListener('click', function() {
+            document.getElementById('descriptionDisplay').style.display = 'none';
+            document.getElementById('descriptionEdit').style.display = 'block';
+        });
+
+        document.getElementById('cancelDescriptionBtn').addEventListener('click', function() {
+            document.getElementById('descriptionDisplay').style.display = 'block';
+            document.getElementById('descriptionEdit').style.display = 'none';
+        });
+    </script>
+</body>
+</html>

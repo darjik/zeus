@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head th:replace="layout/main :: head">
+    <title>Customer Personnel - Zeus IMS</title>
+</head>
+<body>
+    <nav th:replace="layout/main :: navbar"></nav>
+
+    <main class="container-fluid py-4">
+        <div th:replace="layout/main :: alerts"></div>
+
+        <div class="row mb-4">
+            <div class="col-md-6">
+                <h1 class="h3 mb-0">
+                    <i class="fas fa-users me-2 text-primary"></i>Personnel Management
+                </h1>
+                <p class="text-muted">
+                    Manage personnel for <strong th:text="${customer.companyName}">Company Name</strong>
+                </p>
+            </div>
+            <div class="col-md-6 text-end">
+                <a th:href="@{/customers/{id}/personnel/new(id=${customer.id})}" class="btn btn-primary me-2">
+                    <i class="fas fa-plus me-2"></i>Add New Personnel
+                </a>
+                <a th:href="@{/customers/view/{id}(id=${customer.id})}" class="btn btn-outline-secondary me-2">
+                    <i class="fas fa-eye me-2"></i>View Customer
+                </a>
+                <a th:href="@{/customers}" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left me-2"></i>Back to Customers
+                </a>
+            </div>
+        </div>
+
+        <!-- Customer Summary Card -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card border-0 shadow-sm bg-light">
+                    <div class="card-body py-3">
+                        <div class="row align-items-center">
+                            <div class="col-md-6">
+                                <div class="d-flex align-items-center">
+                                    <div class="avatar-circle me-3 bg-info">
+                                        <i class="fas fa-building"></i>
+                                    </div>
+                                    <div>
+                                        <h5 class="mb-1" th:text="${customer.companyName}">Company Name</h5>
+                                        <div class="text-muted small">
+                                            <i class="fas fa-users me-1"></i>
+                                            <span th:text="${personnelCount}">0</span> Personnel
+                                            <span th:if="${primaryContact}" class="ms-3">
+                                                <i class="fas fa-star me-1 text-warning"></i>
+                                                Primary: <span th:text="${primaryContact.fullName}">Primary Contact</span>
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6 text-end">
+                                <div th:if="${customer.contactNumber}" class="text-muted small">
+                                    <i class="fas fa-phone me-1"></i><span th:text="${customer.contactNumber}">Phone</span>
+                                </div>
+                                <div th:if="${customer.email}" class="text-muted small">
+                                    <i class="fas fa-envelope me-1"></i><span th:text="${customer.email}">Email</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-light">
+                <div class="row align-items-center">
+                    <div class="col-md-6">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-list me-2"></i>All Personnel
+                            <span class="badge bg-primary ms-2" th:text="${personnelCount}">0</span>
+                        </h5>
+                    </div>
+                    <div class="col-md-6">
+                        <form th:action="@{/customers/{id}/personnel(id=${customer.id})}" method="get" class="d-flex">
+                            <input type="text" name="search" th:value="${search}" class="form-control me-2"
+                                   placeholder="Search personnel...">
+                            <button type="submit" class="btn btn-outline-primary">
+                                <i class="fas fa-search"></i>
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body p-0">
+                <div th:if="${personnel.empty}" class="text-center py-5">
+                    <i class="fas fa-users fa-3x text-muted mb-3"></i>
+                    <h5 class="text-muted">No personnel found</h5>
+                    <p class="text-muted">
+                        <span th:if="${search}">No personnel match your search criteria.</span>
+                        <span th:unless="${search}">Start by adding the first personnel for this customer.</span>
+                    </p>
+                    <a th:href="@{/customers/{id}/personnel/new(id=${customer.id})}" class="btn btn-primary" th:unless="${search}">
+                        <i class="fas fa-plus me-2"></i>Add First Personnel
+                    </a>
+                </div>
+
+                <div th:unless="${personnel.empty}" class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Personnel Details</th>
+                                <th>Contact Information</th>
+                                <th>Department & Role</th>
+                                <th>Status</th>
+                                <th>Created</th>
+                                <th class="text-center">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="person : ${personnel}">
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <div class="avatar-circle me-3" th:classappend="${person.isPrimaryContact ? 'bg-warning' : 'bg-success'}">
+                                            <i class="fas fa-user"></i>
+                                        </div>
+                                        <div>
+                                            <div class="fw-bold" th:text="${person.fullName}">Full Name</div>
+                                            <div th:if="${person.isPrimaryContact}" class="badge bg-warning text-dark small">
+                                                <i class="fas fa-star me-1"></i>Primary Contact
+                                            </div>
+                                            <div th:if="${person.notes}" class="text-muted small mt-1"
+                                                 th:text="${#strings.abbreviate(person.notes, 50)}">Notes</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div th:if="${person.contactNumber}" class="mb-1">
+                                        <i class="fas fa-phone me-1 text-muted"></i>
+                                        <span th:text="${person.contactNumber}">Contact</span>
+                                    </div>
+                                    <div th:if="${person.email}" class="mb-1">
+                                        <i class="fas fa-envelope me-1 text-muted"></i>
+                                        <a th:href="'mailto:' + ${person.email}" th:text="${person.email}"
+                                           class="text-decoration-none">Email</a>
+                                    </div>
+                                    <div th:if="${person.secondaryContact}" class="text-muted small">
+                                        <i class="fas fa-phone-alt me-1"></i>
+                                        <span th:text="${person.secondaryContact}">Secondary</span>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div th:if="${person.department}" class="mb-1">
+                                        <i class="fas fa-building-user me-1 text-muted"></i>
+                                        <span th:text="${person.department}">Department</span>
+                                    </div>
+                                    <div th:if="${person.designation}" class="text-muted small">
+                                        <i class="fas fa-user-tie me-1"></i>
+                                        <span th:text="${person.designation}">Designation</span>
+                                    </div>
+                                    <div th:unless="${person.department != null and !#strings.isEmpty(person.department)} or ${person.designation != null and !#strings.isEmpty(person.designation)}" class="text-muted small">
+                                        <i class="fas fa-minus me-1"></i>Not specified
+                                    </div>
+                                </td>
+                                <td>
+                                    <span th:if="${person.active}" class="badge bg-success">
+                                        <i class="fas fa-check-circle me-1"></i>Active
+                                    </span>
+                                    <span th:unless="${person.active}" class="badge bg-danger">
+                                        <i class="fas fa-times-circle me-1"></i>Inactive
+                                    </span>
+                                </td>
+                                <td>
+                                    <span th:text="${#temporals.format(person.createdAt, 'MMM dd, yyyy')}"
+                                          class="text-muted small">Created Date</span>
+                                    <div th:if="${person.createdBy}" class="text-muted small">
+                                        by <span th:text="${person.createdBy}">creator</span>
+                                    </div>
+                                </td>
+                                <td class="text-center">
+                                    <div class="btn-group" role="group">
+                                        <a th:href="@{/customers/{customerId}/personnel/view/{personnelId}(customerId=${customer.id}, personnelId=${person.id})}"
+                                           class="btn btn-sm btn-outline-info" title="View Details">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        <a th:href="@{/customers/{customerId}/personnel/edit/{personnelId}(customerId=${customer.id}, personnelId=${person.id})}"
+                                           class="btn btn-sm btn-outline-primary" title="Edit Personnel">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        <button type="button" class="btn btn-sm btn-outline-danger delete-personnel-btn"
+                                                th:data-personnel-id="${person.id}"
+                                                th:data-customer-id="${customer.id}"
+                                                th:data-personnel-name="${person.fullName}"
+                                                th:disabled="${!person.active}"
+                                                title="Delete Personnel">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Delete Confirmation Modal -->
+    <div class="modal fade" id="deleteModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="fas fa-exclamation-triangle text-warning me-2"></i>Confirm Deletion
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Are you sure you want to deactivate personnel <strong id="deletePersonnelName"></strong>?</p>
+                    <p class="text-muted small">This action will disable the personnel's access but preserve their data.</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <form id="deleteForm" method="post" class="d-inline">
+                        <button type="submit" class="btn btn-danger">
+                            <i class="fas fa-trash me-2"></i>Deactivate Personnel
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <style>
+        .avatar-circle {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+        }
+        .table-hover tbody tr:hover {
+            background-color: rgba(0, 123, 255, 0.05);
+        }
+    </style>
+
+    <script>
+        document.querySelectorAll('.delete-personnel-btn').forEach(button => {
+            button.addEventListener('click', function() {
+                const personnelId = this.getAttribute('data-personnel-id');
+                const customerId = this.getAttribute('data-customer-id');
+                const personnelName = this.getAttribute('data-personnel-name');
+                document.getElementById('deletePersonnelName').textContent = personnelName;
+                document.getElementById('deleteForm').action = '/customers/' + customerId + '/personnel/delete/' + personnelId;
+                new bootstrap.Modal(document.getElementById('deleteModal')).show();
+            });
+        });
+    </script>
+</body>
+</html>

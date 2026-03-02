@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="layout/main :: head">
+    <title th:text="${pageTitle} + ' - Zeus IMS'">User Form - Zeus IMS</title>
+</head>
+<body>
+    <div th:replace="layout/main :: navbar"></div>
+
+    <main class="container-fluid py-4">
+        <div th:replace="layout/main :: alerts"></div>
+
+        <div class="row mb-4">
+            <div class="col-md-8">
+                <h1 class="h3 mb-0">
+                    <i class="fas fa-user-plus me-2 text-primary" th:if="!${isEdit}"></i>
+                    <i class="fas fa-user-edit me-2 text-primary" th:if="${isEdit}"></i>
+                    <span th:text="${pageTitle}">User Form</span>
+                </h1>
+                <p class="text-muted" th:text="${isEdit ? 'Update user information and permissions' : 'Add a new user to the system'}">Form description</p>
+            </div>
+            <div class="col-md-4 text-end">
+                <a th:href="@{/users}" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left me-2"></i>Back to Users
+                </a>
+            </div>
+        </div>
+
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-header bg-light">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-user-cog me-2"></i>User Information
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <form th:action="${isEdit ? '/users/edit/' + userDTO.id : '/users/new'}" th:object="${userDTO}" method="post" novalidate>
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label for="username" class="form-label">Username <span class="text-danger">*</span></label>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="fas fa-user"></i></span>
+                                        <input type="text" class="form-control" id="username" th:field="*{username}"
+                                               th:classappend="${#fields.hasErrors('username')} ? 'is-invalid' : ''"
+                                               placeholder="Enter username" required>
+                                        <div class="invalid-feedback" th:if="${#fields.hasErrors('username')}" th:errors="*{username}">
+                                            Username error
+                                        </div>
+                                    </div>
+                                    <div class="form-text">Must be unique and 3-50 characters long</div>
+                                </div>
+
+                                <div class="col-md-6">
+                                    <label for="fullName" class="form-label">Full Name <span class="text-danger">*</span></label>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="fas fa-id-card"></i></span>
+                                        <input type="text" class="form-control" id="fullName" th:field="*{fullName}"
+                                               th:classappend="${#fields.hasErrors('fullName')} ? 'is-invalid' : ''"
+                                               placeholder="Enter full name" required>
+                                        <div class="invalid-feedback" th:if="${#fields.hasErrors('fullName')}" th:errors="*{fullName}">
+                                            Full name error
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="col-md-6">
+                                    <label for="email" class="form-label">Email Address <span class="text-danger">*</span></label>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="fas fa-envelope"></i></span>
+                                        <input type="email" class="form-control" id="email" th:field="*{email}"
+                                               th:classappend="${#fields.hasErrors('email')} ? 'is-invalid' : ''"
+                                               placeholder="Enter email address" required>
+                                        <div class="invalid-feedback" th:if="${#fields.hasErrors('email')}" th:errors="*{email}">
+                                            Email error
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="col-md-6">
+                                    <label for="phoneNumber" class="form-label">Phone Number</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="fas fa-phone"></i></span>
+                                        <input type="tel" class="form-control" id="phoneNumber" th:field="*{phoneNumber}"
+                                               placeholder="Enter phone number">
+                                    </div>
+                                </div>
+
+                                <div class="col-md-6">
+                                    <label for="role" class="form-label">Role <span class="text-danger">*</span></label>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="fas fa-user-tag"></i></span>
+                                        <select class="form-select" id="role" th:field="*{role}"
+                                                th:classappend="${#fields.hasErrors('role')} ? 'is-invalid' : ''" required>
+                                            <option value="">Select Role</option>
+                                            <option th:each="roleOption : ${userRoles}"
+                                                    th:value="${roleOption}"
+                                                    th:text="${roleOption.displayName}"
+                                                    th:selected="${roleOption == userDTO.role}">Role</option>
+                                        </select>
+                                        <div class="invalid-feedback" th:if="${#fields.hasErrors('role')}" th:errors="*{role}">
+                                            Role error
+                                        </div>
+                                    </div>
+                                    <div class="form-text">
+                                        <small>
+                                            <strong>Owner:</strong> Full system access |
+                                            <strong>Sales:</strong> Customer & enquiry management |
+                                            <strong>Production:</strong> Planning & tracking |
+                                            <strong>Workshop:</strong> Operations |
+                                            <strong>Accountant:</strong> Financial reports
+                                        </small>
+                                    </div>
+                                </div>
+
+                                <div class="col-md-6">
+                                    <label class="form-label">Status</label>
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input" type="checkbox" id="active" th:field="*{active}">
+                                        <label class="form-check-label" for="active">
+                                            <span th:if="*{active}">Active</span>
+                                            <span th:unless="*{active}">Inactive</span>
+                                        </label>
+                                    </div>
+                                    <div class="form-text">Inactive users cannot log in to the system</div>
+                                </div>
+                            </div>
+
+                            <hr class="my-4">
+
+                            <div class="row g-3">
+                                <div class="col-12">
+                                    <h6 class="text-primary">
+                                        <i class="fas fa-lock me-2"></i>Password Information
+                                        <span th:if="${isEdit}" class="text-muted small">(Leave blank to keep current password)</span>
+                                    </h6>
+                                </div>
+
+                                <div class="col-md-6">
+                                    <label for="password" class="form-label">
+                                        Password <span class="text-danger" th:unless="${isEdit}">*</span>
+                                    </label>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="fas fa-key"></i></span>
+                                        <input type="password" class="form-control" id="password" th:field="*{password}"
+                                               th:classappend="${#fields.hasErrors('password')} ? 'is-invalid' : ''"
+                                               placeholder="Enter password" th:required="${!isEdit}">
+                                        <button type="button" class="btn btn-outline-secondary" onclick="togglePassword('password')">
+                                            <i class="fas fa-eye" id="password-eye"></i>
+                                        </button>
+                                        <div class="invalid-feedback" th:if="${#fields.hasErrors('password')}" th:errors="*{password}">
+                                            Password error
+                                        </div>
+                                    </div>
+                                    <div class="form-text">Minimum 6 characters required</div>
+                                </div>
+
+                                <div class="col-md-6">
+                                    <label for="confirmPassword" class="form-label">
+                                        Confirm Password <span class="text-danger" th:unless="${isEdit}">*</span>
+                                    </label>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="fas fa-key"></i></span>
+                                        <input type="password" class="form-control" id="confirmPassword" th:field="*{confirmPassword}"
+                                               th:classappend="${#fields.hasErrors('confirmPassword')} ? 'is-invalid' : ''"
+                                               placeholder="Confirm password" th:required="${!isEdit}">
+                                        <button type="button" class="btn btn-outline-secondary" onclick="togglePassword('confirmPassword')">
+                                            <i class="fas fa-eye" id="confirmPassword-eye"></i>
+                                        </button>
+                                        <div class="invalid-feedback" th:if="${#fields.hasErrors('confirmPassword')}" th:errors="*{confirmPassword}">
+                                            Confirm password error
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <hr class="my-4">
+
+                            <div class="d-flex justify-content-between">
+                                <a th:href="@{/users}" class="btn btn-outline-secondary">
+                                    <i class="fas fa-times me-2"></i>Cancel
+                                </a>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-save me-2"></i>
+                                    <span th:text="${isEdit ? 'Update User' : 'Create User'}">Save</span>
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        function togglePassword(fieldId) {
+            const field = document.getElementById(fieldId);
+            const eye = document.getElementById(fieldId + '-eye');
+
+            if (field.type === 'password') {
+                field.type = 'text';
+                eye.classList.remove('fa-eye');
+                eye.classList.add('fa-eye-slash');
+            } else {
+                field.type = 'password';
+                eye.classList.remove('fa-eye-slash');
+                eye.classList.add('fa-eye');
+            }
+        }
+
+        // Real-time validation
+        document.addEventListener('DOMContentLoaded', function() {
+            const username = document.getElementById('username');
+            const email = document.getElementById('email');
+            const password = document.getElementById('password');
+            const confirmPassword = document.getElementById('confirmPassword');
+
+            // Username availability check
+            let usernameTimeout;
+            username.addEventListener('input', function() {
+                clearTimeout(usernameTimeout);
+                usernameTimeout = setTimeout(function() {
+                    checkUsernameAvailability();
+                }, 500);
+            });
+
+            // Email availability check
+            let emailTimeout;
+            email.addEventListener('input', function() {
+                clearTimeout(emailTimeout);
+                emailTimeout = setTimeout(function() {
+                    checkEmailAvailability();
+                }, 500);
+            });
+
+            // Password confirmation
+            confirmPassword.addEventListener('input', function() {
+                validatePasswordMatch();
+            });
+
+            password.addEventListener('input', function() {
+                validatePasswordMatch();
+            });
+        });
+
+        function checkUsernameAvailability() {
+            const username = document.getElementById('username').value;
+            const userId = [[${userDTO.id}]];
+
+            if (username.length >= 3) {
+                fetch(`/users/check-username?username=${encodeURIComponent(username)}&userId=${userId || ''}`)
+                    .then(response => response.json())
+                    .then(available => {
+                        const usernameField = document.getElementById('username');
+                        if (!available) {
+                            usernameField.classList.add('is-invalid');
+                            usernameField.classList.remove('is-valid');
+                        } else {
+                            usernameField.classList.remove('is-invalid');
+                            usernameField.classList.add('is-valid');
+                        }
+                    });
+            }
+        }
+
+        function checkEmailAvailability() {
+            const email = document.getElementById('email').value;
+            const userId = [[${userDTO.id}]];
+
+            if (email.includes('@')) {
+                fetch(`/users/check-email?email=${encodeURIComponent(email)}&userId=${userId || ''}`)
+                    .then(response => response.json())
+                    .then(available => {
+                        const emailField = document.getElementById('email');
+                        if (!available) {
+                            emailField.classList.add('is-invalid');
+                            emailField.classList.remove('is-valid');
+                        } else {
+                            emailField.classList.remove('is-invalid');
+                            emailField.classList.add('is-valid');
+                        }
+                    });
+            }
+        }
+
+        function validatePasswordMatch() {
+            const password = document.getElementById('password').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+            const confirmField = document.getElementById('confirmPassword');
+
+            if (confirmPassword && password !== confirmPassword) {
+                confirmField.classList.add('is-invalid');
+                confirmField.classList.remove('is-valid');
+            } else if (confirmPassword) {
+                confirmField.classList.remove('is-invalid');
+                confirmField.classList.add('is-valid');
+            }
+        }
+    </script>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script th:replace="layout/main :: alert-js"></script>
+
+    <div th:replace="layout/main :: js-bundle"></div>
+</body>
+</html>

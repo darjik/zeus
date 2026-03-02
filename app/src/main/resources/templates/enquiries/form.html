@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head th:replace="layout/main :: head">
+    <title th:text="${pageTitle} + ' - Zeus IMS'">Enquiry Form - Zeus IMS</title>
+</head>
+<body>
+    <nav th:replace="layout/main :: navbar"></nav>
+
+    <main class="container-fluid py-4">
+        <div th:replace="layout/main :: alerts"></div>
+
+        <div class="row mb-4">
+            <div class="col-md-8">
+                <h1 class="h3 mb-0">
+                    <i class="fas fa-question-circle me-2 text-info"></i>
+                    <span th:text="${pageTitle}">Enquiry Form</span>
+                </h1>
+                <p class="text-muted mb-0">Fill in the enquiry details below</p>
+            </div>
+            <div class="col-md-4 text-end">
+                <a th:href="@{/enquiries}" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left me-2"></i>Back to List
+                </a>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-lg-8">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-header bg-light">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-info-circle me-2"></i>Enquiry Information
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <form th:action="${isEdit} ? @{/enquiries/{id}/edit(id=${enquiryDTO.id})} : @{/enquiries/new}"
+                              th:object="${enquiryDTO}" method="post" novalidate>
+
+                            <div class="row g-3">
+                                <div class="col-md-6" th:if="${isEdit}">
+                                    <label for="enquiryNumber" class="form-label">Enquiry Number</label>
+                                    <input type="text" class="form-control" id="enquiryNumber"
+                                           th:field="*{enquiryNumber}" readonly>
+                                </div>
+
+                                <div class="col-md-6">
+                                    <label for="customerId" class="form-label">Customer <span class="text-danger">*</span></label>
+                                    <select class="form-select" id="customerId" th:field="*{customerId}"
+                                            th:class="${#fields.hasErrors('customerId')} ? 'form-select is-invalid' : 'form-select'">
+                                        <option value="">Select Customer</option>
+                                        <option th:each="customer : ${customers}"
+                                                th:value="${customer.id}"
+                                                th:text="${customer.companyName}">Customer Name</option>
+                                    </select>
+                                    <div class="invalid-feedback" th:if="${#fields.hasErrors('customerId')}"
+                                         th:errors="*{customerId}">Customer error</div>
+                                </div>
+
+                                <div class="col-md-6">
+                                    <label for="status" class="form-label">Status <span class="text-danger">*</span></label>
+                                    <select class="form-select" id="status" th:field="*{status}"
+                                            th:class="${#fields.hasErrors('status')} ? 'form-select is-invalid' : 'form-select'">
+                                        <option value="">Select Status</option>
+                                        <option th:each="enquiryStatus : ${statuses}"
+                                                th:value="${enquiryStatus.name()}"
+                                                th:text="${enquiryStatus.displayName}">Status</option>
+                                    </select>
+                                    <div class="invalid-feedback" th:if="${#fields.hasErrors('status')}"
+                                         th:errors="*{status}">Status error</div>
+                                </div>
+
+                                <div class="col-md-6">
+                                    <label for="priority" class="form-label">Priority <span class="text-danger">*</span></label>
+                                    <select class="form-select" id="priority" th:field="*{priority}"
+                                            th:class="${#fields.hasErrors('priority')} ? 'form-select is-invalid' : 'form-select'">
+                                        <option value="">Select Priority</option>
+                                        <option th:each="enquiryPriority : ${priorities}"
+                                                th:value="${enquiryPriority.name()}"
+                                                th:text="${enquiryPriority.displayName}">Priority</option>
+                                    </select>
+                                    <div class="invalid-feedback" th:if="${#fields.hasErrors('priority')}"
+                                         th:errors="*{priority}">Priority error</div>
+                                </div>
+
+                                <div class="col-md-6">
+                                    <label for="deliveryExpectedDate" class="form-label">Expected Delivery Date</label>
+                                    <input type="datetime-local" class="form-control" id="deliveryExpectedDate"
+                                           th:field="*{deliveryExpectedDate}"
+                                           th:class="${#fields.hasErrors('deliveryExpectedDate')} ? 'form-control is-invalid' : 'form-control'">
+                                    <div class="invalid-feedback" th:if="${#fields.hasErrors('deliveryExpectedDate')}"
+                                         th:errors="*{deliveryExpectedDate}">Delivery date error</div>
+                                </div>
+
+                                <div class="col-md-6">
+                                    <label for="quoteValidUntil" class="form-label">Quote Valid Until</label>
+                                    <input type="datetime-local" class="form-control" id="quoteValidUntil"
+                                           th:field="*{quoteValidUntil}"
+                                           th:class="${#fields.hasErrors('quoteValidUntil')} ? 'form-control is-invalid' : 'form-control'">
+                                    <div class="invalid-feedback" th:if="${#fields.hasErrors('quoteValidUntil')}"
+                                         th:errors="*{quoteValidUntil}">Quote validity error</div>
+                                </div>
+
+                                <div class="col-12">
+                                    <label for="tags" class="form-label">Tags</label>
+                                    <input type="text" class="form-control" id="tags" th:field="*{tags}"
+                                           th:class="${#fields.hasErrors('tags')} ? 'form-control is-invalid' : 'form-control'"
+                                           placeholder="Enter tags separated by commas">
+                                    <div class="form-text">Use tags to categorize and search enquiries easily</div>
+                                    <div class="invalid-feedback" th:if="${#fields.hasErrors('tags')}"
+                                         th:errors="*{tags}">Tags error</div>
+                                </div>
+
+                                <div class="col-12">
+                                    <label for="description" class="form-label">Description</label>
+                                    <textarea class="form-control" id="description" th:field="*{description}" rows="3"
+                                              th:class="${#fields.hasErrors('description')} ? 'form-control is-invalid' : 'form-control'"
+                                              placeholder="Enter enquiry description"></textarea>
+                                    <div class="invalid-feedback" th:if="${#fields.hasErrors('description')}"
+                                         th:errors="*{description}">Description error</div>
+                                </div>
+
+                                <div class="col-12">
+                                    <label for="requirements" class="form-label">Special Requirements</label>
+                                    <textarea class="form-control" id="requirements" th:field="*{requirements}" rows="3"
+                                              th:class="${#fields.hasErrors('requirements')} ? 'form-control is-invalid' : 'form-control'"
+                                              placeholder="Enter any special requirements or specifications"></textarea>
+                                    <div class="invalid-feedback" th:if="${#fields.hasErrors('requirements')}"
+                                         th:errors="*{requirements}">Requirements error</div>
+                                </div>
+                            </div>
+
+                            <div class="row mt-4">
+                                <div class="col-12">
+                                    <hr>
+                                    <div class="d-flex justify-content-between">
+                                        <a th:href="@{/enquiries}" class="btn btn-outline-secondary">
+                                            <i class="fas fa-times me-2"></i>Cancel
+                                        </a>
+                                        <button type="submit" class="btn btn-primary">
+                                            <i class="fas fa-save me-2"></i>
+                                            <span th:text="${isEdit} ? 'Update Enquiry' : 'Create Enquiry'">Save</span>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-4">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-header bg-light">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-info-circle me-2"></i>Information
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="alert alert-info">
+                            <h6 class="alert-heading">
+                                <i class="fas fa-lightbulb me-2"></i>Tips
+                            </h6>
+                            <ul class="mb-0 small">
+                                <li>Select the customer and product for this enquiry</li>
+                                <li>Specify the quantity required</li>
+                                <li>Set appropriate priority based on urgency</li>
+                                <li>Use tags for easy categorization and search</li>
+                                <li>Add unit price if known for better tracking</li>
+                            </ul>
+                        </div>
+
+                        <div th:if="${isEdit}" class="alert alert-warning">
+                            <h6 class="alert-heading">
+                                <i class="fas fa-exclamation-triangle me-2"></i>Note
+                            </h6>
+                            <p class="mb-0 small">
+                                Enquiry number cannot be changed after creation.
+                                Changes will be tracked with timestamp.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <div th:replace="layout/main :: js-bundle"></div>
+</body>
+</html>

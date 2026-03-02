@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head th:replace="layout/main :: head">
+    <title th:text="'Manage Parts - ' + ${product.name} + ' - Zeus IMS'">Manage Parts - Zeus IMS</title>
+</head>
+<body>
+    <nav th:replace="layout/main :: navbar"></nav>
+
+    <main class="container-fluid py-4">
+        <div th:replace="layout/main :: alerts"></div>
+
+        <div class="row mb-4">
+            <div class="col-12">
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a th:href="@{/products}">Products</a></li>
+                        <li class="breadcrumb-item"><a th:href="@{/products/{id}(id=${product.id})}" th:text="${product.name}">Product</a></li>
+                        <li class="breadcrumb-item active">Manage Parts</li>
+                    </ol>
+                </nav>
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <h1 class="h3 mb-2">
+                            <i class="fas fa-cogs me-2 text-primary"></i>Manage Parts
+                        </h1>
+                        <p class="text-muted mb-0">Managing parts for: <strong th:text="${product.displayName}">Product</strong></p>
+                    </div>
+                    <a th:href="@{/products/{id}(id=${product.id})}" class="btn btn-outline-secondary">
+                        <i class="fas fa-arrow-left me-1"></i>Back to Product
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-lg-8">
+                <!-- Parts List -->
+                <div class="card border-0 shadow-sm">
+                    <div class="card-header bg-light">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-list me-2"></i>Product Parts
+                        </h5>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive" th:if="${parts != null and !parts.empty}">
+                            <table class="table table-hover mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th class="border-0 px-4 py-3">Part Details</th>
+                                        <th class="border-0 py-3">Material</th>
+                                        <th class="border-0 py-3">Quantity</th>
+                                        <th class="border-0 py-3">Vendor</th>
+                                        <th class="border-0 py-3">Status</th>
+                                        <th class="border-0 py-3 text-end">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr th:each="part : ${parts}">
+                                        <td class="px-4 py-3">
+                                            <div class="d-flex align-items-center">
+                                                <div class="me-3">
+                                                    <div class="bg-info text-white rounded-circle d-flex align-items-center justify-content-center"
+                                                         style="width: 35px; height: 35px;">
+                                                        <i class="fas fa-cog"></i>
+                                                    </div>
+                                                </div>
+                                                <div>
+                                                    <h6 class="mb-1" th:text="${part.partName}">Part Name</h6>
+                                                    <small class="text-muted" th:if="${part.partNumber}" th:text="'Part #: ' + ${part.partNumber}">Part Number</small>
+                                                    <div th:if="${part.description}" class="mt-1">
+                                                        <small class="text-muted" th:text="${part.description}">Description</small>
+                                                    </div>
+                                                    <div th:if="${part.dimensions}" class="mt-1">
+                                                        <small class="badge bg-light text-dark" th:text="'Dimensions: ' + ${part.dimensions}">Dimensions</small>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td class="py-3">
+                                            <span th:text="${part.material ?: 'N/A'}" class="text-muted">Material</span>
+                                        </td>
+                                        <td class="py-3">
+                                            <span th:text="${part.quantityRequired ?: 1}">1</span>
+                                            <span th:if="${part.unitOfMeasure}" th:text="' ' + ${part.unitOfMeasure}" class="text-muted"> pcs</span>
+                                        </td>
+                                        <td class="py-3">
+                                            <span th:if="${part.vendorName}" th:text="${part.vendorName}" class="text-success">Vendor</span>
+                                            <span th:unless="${part.vendorName}" class="text-muted">No Vendor</span>
+                                        </td>
+                                        <td class="py-3">
+                                            <span th:if="${part.active}" class="badge bg-success">Active</span>
+                                            <span th:unless="${part.active}" class="badge bg-secondary">Inactive</span>
+                                        </td>
+                                        <td class="py-3 text-end">
+                                            <div class="btn-group" role="group">
+                                                <a th:href="@{/products/{productId}/parts/{partId}/edit(productId=${product.id}, partId=${part.id})}"
+                                                   class="btn btn-outline-warning btn-sm" title="Edit Part"
+                                                   sec:authorize="hasAnyAuthority('OWNER', 'SALES', 'PRODUCTION')">
+                                                    <i class="fas fa-edit"></i>
+                                                </a>
+                                                <button type="button" class="btn btn-outline-secondary btn-sm"
+                                                        th:data-part-id="${part.id}"
+                                                        onclick="togglePartStatus(this.dataset.partId)"
+                                                        title="Toggle Status"
+                                                        sec:authorize="hasAnyAuthority('OWNER', 'SALES', 'PRODUCTION')">
+                                                    <i class="fas fa-toggle-on" th:if="${part.active}"></i>
+                                                    <i class="fas fa-toggle-off" th:unless="${part.active}"></i>
+                                                </button>
+                                                <button type="button" class="btn btn-outline-danger btn-sm"
+                                                        th:data-part-id="${part.id}"
+                                                        th:data-part-name="${part.partName}"
+                                                        onclick="confirmDeletePart(this.dataset.partId, this.dataset.partName)"
+                                                        title="Delete Part"
+                                                        sec:authorize="hasAnyAuthority('OWNER', 'SALES')">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div th:if="${parts == null or parts.empty}" class="text-center py-5">
+                            <i class="fas fa-cogs fa-3x text-muted mb-3"></i>
+                            <h5 class="text-muted">No Parts Added Yet</h5>
+                            <p class="text-muted mb-4">Start by adding parts that make up this product using the form on the right.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-4">
+                <!-- Add New Part Form -->
+                <div class="card border-0 shadow-sm">
+                    <div class="card-header bg-primary text-white">
+                        <h6 class="card-title mb-0">
+                            <i class="fas fa-plus me-2"></i>Add New Part
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <form th:action="@{/products/{id}/parts/new(id=${product.id})}"
+                              th:object="${newPart}"
+                              method="post"
+                              class="needs-validation"
+                              novalidate
+                              sec:authorize="hasAnyAuthority('OWNER', 'SALES', 'PRODUCTION')">
+
+                            <input type="hidden" name="_csrf" th:value="${_csrf.token}">
+
+                            <div class="mb-3">
+                                <label for="partName" class="form-label">Part Name <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="partName" th:field="*{partName}" required>
+                                <div class="invalid-feedback">Part name is required</div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="partNumber" class="form-label">Part Number</label>
+                                <input type="text" class="form-control" id="partNumber" th:field="*{partNumber}">
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="description" class="form-label">Description</label>
+                                <textarea class="form-control" id="description" th:field="*{description}" rows="2"></textarea>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-6 mb-3">
+                                    <label for="material" class="form-label">Material</label>
+                                    <input type="text" class="form-control" id="material" th:field="*{material}">
+                                </div>
+                                <div class="col-6 mb-3">
+                                    <label for="quantityRequired" class="form-label">Quantity</label>
+                                    <input type="number" class="form-control" id="quantityRequired" th:field="*{quantityRequired}" min="1" value="1">
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="dimensions" class="form-label">Dimensions</label>
+                                <input type="text" class="form-control" id="dimensions" th:field="*{dimensions}" placeholder="L x W x H">
+                            </div>
+
+                            <div class="row">
+                                <div class="col-6 mb-3">
+                                    <label for="unitOfMeasure" class="form-label">Unit</label>
+                                    <select class="form-select" id="unitOfMeasure" th:field="*{unitOfMeasure}">
+                                        <option value="">Select Unit</option>
+                                        <option value="Pieces">Pieces</option>
+                                        <option value="Kilograms">Kilograms</option>
+                                        <option value="Grams">Grams</option>
+                                        <option value="Meters">Meters</option>
+                                        <option value="Centimeters">Centimeters</option>
+                                        <option value="Millimeters">Millimeters</option>
+                                    </select>
+                                </div>
+                                <div class="col-6 mb-3">
+                                    <label for="vendorId" class="form-label">Vendor</label>
+                                    <select class="form-select" id="vendorId" th:field="*{vendorId}">
+                                        <option value="">No Vendor</option>
+                                        <option th:each="vendor : ${vendors}"
+                                                th:value="${vendor.id}"
+                                                th:text="${vendor.companyName}">Vendor</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="specifications" class="form-label">Specifications</label>
+                                <textarea class="form-control" id="specifications" th:field="*{specifications}" rows="2"></textarea>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="active" class="form-label">Status</label>
+                                <select class="form-select" id="active" th:field="*{active}">
+                                    <option value="true">Active</option>
+                                    <option value="false">Inactive</option>
+                                </select>
+                            </div>
+
+                            <button type="submit" class="btn btn-primary w-100">
+                                <i class="fas fa-plus me-1"></i>Add Part
+                            </button>
+                        </form>
+
+                        <div sec:authorize="!hasAnyAuthority('OWNER', 'SALES', 'PRODUCTION')" class="text-center py-3">
+                            <i class="fas fa-lock fa-2x text-muted mb-2"></i>
+                            <p class="text-muted mb-0">Access Restricted</p>
+                            <small class="text-muted">You don't have permission to add parts</small>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Parts Summary -->
+                <div class="card border-0 shadow-sm mt-4">
+                    <div class="card-header bg-light">
+                        <h6 class="card-title mb-0">
+                            <i class="fas fa-chart-pie me-2"></i>Parts Summary
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="row text-center">
+                            <div class="col-6">
+                                <h4 class="text-primary mb-1" th:text="${product.activePartsCount}">0</h4>
+                                <small class="text-muted">Active Parts</small>
+                            </div>
+                            <div class="col-6">
+                                <h4 class="text-info mb-1" th:text="${#lists.size(parts)}">0</h4>
+                                <small class="text-muted">Total Parts</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Delete Part Confirmation Modal -->
+    <div class="modal fade" id="deletePartModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Confirm Part Deletion</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Are you sure you want to delete the part "<span id="deletePartName"></span>"?</p>
+                    <p class="text-danger"><small>This action cannot be undone.</small></p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <form id="deletePartForm" method="post" style="display: inline;">
+                        <input type="hidden" name="_csrf" th:value="${_csrf.token}">
+                        <button type="submit" class="btn btn-danger">Delete Part</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function confirmDeletePart(partId, partName) {
+            document.getElementById('deletePartName').textContent = partName;
+            document.getElementById('deletePartForm').action = `/products/${[[${product.id}]]}/parts/${partId}/delete`;
+            new bootstrap.Modal(document.getElementById('deletePartModal')).show();
+        }
+
+        function togglePartStatus(partId) {
+            const csrfToken = document.querySelector('meta[name="_csrf"]').getAttribute('content');
+            const csrfHeader = document.querySelector('meta[name="_csrf_header"]').getAttribute('content');
+
+            fetch(`/products/${[[${product.id}]]}/parts/${partId}/toggle-status`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'X-Requested-With': 'XMLHttpRequest',
+                    [csrfHeader]: csrfToken
+                }
+            })
+            .then(response => {
+                if (response.ok) {
+                    location.reload();
+                } else {
+                    alert('Failed to update part status');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Failed to update part status');
+            });
+        }
+
+        // Form validation
+        (function() {
+            'use strict';
+            window.addEventListener('load', function() {
+                var forms = document.getElementsByClassName('needs-validation');
+                var validation = Array.prototype.filter.call(forms, function(form) {
+                    form.addEventListener('submit', function(event) {
+                        if (form.checkValidity() === false) {
+                            event.preventDefault();
+                            event.stopPropagation();
+                        }
+                        form.classList.add('was-validated');
+                    }, false);
+                });
+            }, false);
+        })();
+    </script>
+
+    <div th:replace="layout/main :: js-bundle"></div>
+</body>
+</html>

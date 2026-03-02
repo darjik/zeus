@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head th:replace="layout/main :: head">
+    <title>Orders - Zeus IMS</title>
+</head>
+<body>
+    <nav th:replace="layout/main :: navbar"></nav>
+
+    <main class="container-fluid py-4">
+        <div th:replace="layout/main :: alerts"></div>
+
+        <div class="row mb-4">
+            <div class="col-md-6">
+                <h1 class="h3 mb-0">
+                    <i class="fas fa-shopping-cart me-2 text-success"></i>Orders Management
+                </h1>
+                <p class="text-muted">Manage customer orders and track their progress</p>
+            </div>
+            <div class="col-md-6 text-end">
+                <a th:href="@{/orders/new}" class="btn btn-success" sec:authorize="hasAnyAuthority('OWNER', 'SALES')" th:unless="${readOnlyMode}">
+                    <i class="fas fa-plus me-1"></i>New Order
+                </a>
+                <div th:if="${readOnlyMode}" class="alert alert-info alert-sm">
+                    <i class="fas fa-eye me-1"></i>Read-only access
+                </div>
+            </div>
+        </div>
+
+        <div class="row mb-4">
+            <div class="col-md-8">
+                <form th:action="@{/orders}" method="get" class="d-flex">
+                    <input type="search" class="form-control me-2" name="search" th:value="${search}" placeholder="Search orders...">
+                    <button type="submit" class="btn btn-outline-primary">
+                        <i class="fas fa-search"></i>
+                    </button>
+                </form>
+            </div>
+            <div class="col-md-4">
+                <div class="d-flex gap-2">
+                    <select class="form-select" onchange="filterByStatus(this.value)">
+                        <option value="">All Statuses</option>
+                        <option th:each="status : ${orderStatuses}"
+                                th:value="${status}"
+                                th:text="${status.displayName}"
+                                th:selected="${selectedStatus == status.name()}">
+                        </option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-light">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-list me-2"></i>Orders List
+                    <span class="badge bg-primary ms-2" th:text="${totalElements}">0</span>
+                </h5>
+            </div>
+            <div class="card-body p-0">
+                <div th:if="${ordersPage.hasContent()}" class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Order Number</th>
+                                <th>Customer</th>
+                                <th>Status</th>
+                                <th>Priority</th>
+                                <th>Order Date</th>
+                                <th>Expected Delivery</th>
+                                <th>Total Amount</th>
+                                <th class="text-center">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="order : ${ordersPage.content}">
+                                <td>
+                                    <a th:href="@{/orders/{id}(id=${order.id})}" class="text-decoration-none fw-bold">
+                                        <span th:text="${order.orderNumber}">ORD-202501-0001</span>
+                                    </a>
+                                    <div th:if="${order.purchaseOrderNumber}" class="small text-muted">
+                                        PO: <span th:text="${order.purchaseOrderNumber}">PO123</span>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="fw-bold" th:text="${order.customerName}">Customer Name</div>
+                                    <div th:if="${order.customerPersonnelName}" class="small text-muted" th:text="${order.customerPersonnelName}">Contact Person</div>
+                                </td>
+                                <td>
+                                    <span class="badge"
+                                          th:classappend="${order.status.name() == 'PENDING' ? 'bg-warning' :
+                                                          order.status.name() == 'CONFIRMED' ? 'bg-info' :
+                                                          order.status.name() == 'IN_DEVELOPMENT' ? 'bg-primary' :
+                                                          order.status.name() == 'TESTING' ? 'bg-secondary' :
+                                                          order.status.name() == 'READY_FOR_DISPATCH' ? 'bg-dark' :
+                                                          order.status.name() == 'DISPATCHED' ? 'bg-warning' :
+                                                          order.status.name() == 'DELIVERED' ? 'bg-success' :
+                                                          order.status.name() == 'CANCELLED' ? 'bg-danger' : 'bg-warning'}"
+                                          th:text="${order.status.displayName}">Status</span>
+                                </td>
+                                <td>
+                                    <span class="badge"
+                                          th:classappend="${order.priority.name() == 'URGENT' ? 'bg-danger' :
+                                                          order.priority.name() == 'HIGH' ? 'bg-warning' :
+                                                          order.priority.name() == 'MEDIUM' ? 'bg-info' : 'bg-secondary'}"
+                                          th:text="${order.priority.displayName}">Priority</span>
+                                </td>
+                                <td>
+                                    <span th:text="${#temporals.format(order.orderDate, 'dd/MM/yyyy')}">01/01/2025</span>
+                                    <div class="small text-muted" th:text="${#temporals.format(order.orderDate, 'HH:mm')}">10:30</div>
+                                </td>
+                                <td>
+                                    <span th:if="${order.deliveryExpectedDate}" th:text="${#temporals.format(order.deliveryExpectedDate, 'dd/MM/yyyy')}">15/01/2025</span>
+                                    <span th:unless="${order.deliveryExpectedDate}" class="text-muted">Not set</span>
+                                </td>
+                                <td>
+                                    <span th:if="${order.totalAmount}" class="fw-bold" th:text="'₹ ' + ${#numbers.formatDecimal(order.totalAmount, 0, 2)}">₹ 50,000.00</span>
+                                    <span th:unless="${order.totalAmount}" class="text-muted">Not calculated</span>
+                                </td>
+                                <td class="text-center">
+                                    <div class="btn-group btn-group-sm">
+                                        <a th:href="@{/orders/{id}(id=${order.id})}" class="btn btn-outline-primary btn-sm" title="View">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        <a th:href="@{/orders/{id}/edit(id=${order.id})}" class="btn btn-outline-warning btn-sm"
+                                           title="Edit" sec:authorize="hasAnyAuthority('OWNER', 'SALES')">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div th:unless="${ordersPage.hasContent()}" class="text-center py-5">
+                    <i class="fas fa-shopping-cart fa-3x text-muted mb-3"></i>
+                    <h5 class="text-muted">No orders found</h5>
+                    <p class="text-muted">
+                        <span th:if="${search}">No orders match your search criteria.</span>
+                        <span th:unless="${search}">Start by creating your first order.</span>
+                    </p>
+                    <a th:href="@{/orders/new}" class="btn btn-success" sec:authorize="hasAnyAuthority('OWNER', 'SALES')">
+                        <i class="fas fa-plus me-1"></i>Create First Order
+                    </a>
+                </div>
+            </div>
+            <div th:if="${ordersPage.hasContent() && ordersPage.totalPages > 1}" class="card-footer">
+                <nav>
+                    <ul class="pagination pagination-sm justify-content-center mb-0">
+                        <li class="page-item" th:classappend="${!ordersPage.hasPrevious()} ? 'disabled'">
+                            <a class="page-link" th:href="@{/orders(page=${currentPage - 1}, search=${search}, status=${selectedStatus})}">Previous</a>
+                        </li>
+                        <li th:each="pageNum : ${#numbers.sequence(0, totalPages - 1)}"
+                            class="page-item" th:classappend="${pageNum == currentPage} ? 'active'">
+                            <a class="page-link" th:href="@{/orders(page=${pageNum}, search=${search}, status=${selectedStatus})}" th:text="${pageNum + 1}">1</a>
+                        </li>
+                        <li class="page-item" th:classappend="${!ordersPage.hasNext()} ? 'disabled'">
+                            <a class="page-link" th:href="@{/orders(page=${currentPage + 1}, search=${search}, status=${selectedStatus})}">Next</a>
+                        </li>
+                    </ul>
+                </nav>
+            </div>
+        </div>
+    </main>
+
+    <script th:replace="layout/main :: js-bundle"></script>
+    <script>
+        function filterByStatus(status) {
+            const url = new URL(window.location);
+            if (status) {
+                url.searchParams.set('status', status);
+            } else {
+                url.searchParams.delete('status');
+            }
+            url.searchParams.delete('page');
+            window.location.href = url.toString();
+        }
+    </script>
+</body>
+</html>

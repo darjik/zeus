@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head th:replace="layout/main :: head">
+    <title th:text="${editMode ? 'Edit Order' : 'New Order'} + ' - Zeus IMS'">New Order - Zeus IMS</title>
+</head>
+<body>
+    <nav th:replace="layout/main :: navbar"></nav>
+
+    <main class="container-fluid py-4">
+        <div th:replace="layout/main :: alerts"></div>
+
+        <div class="row mb-4">
+            <div class="col-12">
+                <h1 class="h3 mb-0">
+                    <i class="fas fa-shopping-cart me-2 text-success"></i>
+                    <span th:text="${editMode ? 'Edit Order' : 'New Order'}">New Order</span>
+                </h1>
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a th:href="@{/orders}">Orders</a></li>
+                        <li class="breadcrumb-item active" th:text="${editMode ? 'Edit' : 'New'}">New</li>
+                    </ol>
+                </nav>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-lg-8">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-header bg-light">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-info-circle me-2"></i>Order Information
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <form th:action="${editMode ? '/orders/' + order.id : '/orders'}"
+                              th:object="${order}" method="post">
+
+                            <div class="row mb-3" th:if="${editMode}">
+                                <div class="col-md-6">
+                                    <label class="form-label">Order Number</label>
+                                    <input type="text" class="form-control" th:value="${order.orderNumber}" readonly>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Current Status</label>
+                                    <span class="form-control-plaintext badge bg-info" th:text="${order.status?.displayName}">Status</span>
+                                </div>
+                            </div>
+
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label for="customerId" class="form-label">Customer *</label>
+                                    <select id="customerId" th:field="*{customerId}" class="form-select" required onchange="loadCustomerPersonnel(this.value)">
+                                        <option value="">Select Customer</option>
+                                        <option th:each="customer : ${customers}"
+                                                th:value="${customer.id}"
+                                                th:text="${customer.companyName}">Customer Name</option>
+                                    </select>
+                                    <div class="invalid-feedback" th:if="${#fields.hasErrors('customerId')}" th:errors="*{customerId}">
+                                        Customer is required
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="customerPersonnelId" class="form-label">Contact Person</label>
+                                    <select id="customerPersonnelId" th:field="*{customerPersonnelId}" class="form-select">
+                                        <option value="">Select Contact Person</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label for="priority" class="form-label">Priority</label>
+                                    <select id="priority" th:field="*{priority}" class="form-select">
+                                        <option th:each="priority : ${orderPriorities}"
+                                                th:value="${priority}"
+                                                th:text="${priority.displayName}">Priority</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="deliveryExpectedDate" class="form-label">Expected Delivery Date</label>
+                                    <input type="date" id="deliveryExpectedDate" th:field="*{deliveryExpectedDate}" class="form-control">
+                                </div>
+                            </div>
+
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label for="purchaseOrderNumber" class="form-label">Purchase Order Number</label>
+                                    <input type="text" id="purchaseOrderNumber" th:field="*{purchaseOrderNumber}" class="form-control"
+                                           placeholder="Customer's PO Number">
+                                </div>
+                                <div class="col-md-6" th:if="${editMode}">
+                                    <label for="status" class="form-label">Status</label>
+                                    <select id="status" th:field="*{status}" class="form-select">
+                                        <option th:each="status : ${orderStatuses}"
+                                                th:value="${status}"
+                                                th:text="${status.displayName}">Status</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="description" class="form-label">Description</label>
+                                <textarea id="description" th:field="*{description}" class="form-control" rows="3"
+                                          placeholder="Brief description of the order"></textarea>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="requirements" class="form-label">Requirements</label>
+                                <textarea id="requirements" th:field="*{requirements}" class="form-control" rows="4"
+                                          placeholder="Detailed requirements and specifications"></textarea>
+                            </div>
+
+                            <div class="mb-3" th:if="${editMode}">
+                                <label for="transportDetails" class="form-label">Transport Details</label>
+                                <textarea id="transportDetails" th:field="*{transportDetails}" class="form-control" rows="3"
+                                          placeholder="Transport and delivery details"></textarea>
+                            </div>
+
+                            <div class="d-flex gap-2">
+                                <button type="submit" class="btn btn-success">
+                                    <i class="fas fa-save me-1"></i>
+                                    <span th:text="${editMode ? 'Update Order' : 'Create Order'}">Create Order</span>
+                                </button>
+                                <a th:href="@{/orders}" class="btn btn-secondary">
+                                    <i class="fas fa-times me-1"></i>Cancel
+                                </a>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-4">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-header bg-light">
+                        <h6 class="card-title mb-0">
+                            <i class="fas fa-info-circle me-2"></i>Order Guidelines
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="small">
+                            <h6>Order Creation Tips:</h6>
+                            <ul class="mb-3">
+                                <li>Select the customer first to enable contact person selection</li>
+                                <li>Set expected delivery date for better planning</li>
+                                <li>Include customer's PO number for reference</li>
+                                <li>Provide detailed requirements for production team</li>
+                            </ul>
+
+                            <h6>Status Information:</h6>
+                            <ul class="mb-0">
+                                <li><strong>Pending:</strong> Order received, awaiting confirmation</li>
+                                <li><strong>Confirmed:</strong> Order confirmed and accepted</li>
+                                <li><strong>In Development:</strong> Product development in progress</li>
+                                <li><strong>Testing:</strong> Quality testing phase</li>
+                                <li><strong>Ready for Dispatch:</strong> Ready to ship</li>
+                                <li><strong>Dispatched:</strong> Order shipped</li>
+                                <li><strong>Delivered:</strong> Order delivered to customer</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card border-0 shadow-sm mt-3" th:if="${fromEnquiry}">
+                    <div class="card-header bg-info text-white">
+                        <h6 class="card-title mb-0">
+                            <i class="fas fa-lightbulb me-2"></i>Converting from Enquiry
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <p class="small mb-0">
+                            This order is being created from an existing enquiry.
+                            Most fields will be pre-filled with enquiry data.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script th:replace="layout/main :: js-bundle"></script>
+    <script>
+        function loadCustomerPersonnel(customerId) {
+            const personnelSelect = document.getElementById('customerPersonnelId');
+            personnelSelect.innerHTML = '<option value="">Select Contact Person</option>';
+
+            if (customerId) {
+                fetch(`/customers/${customerId}/personnel/api`)
+                    .then(response => response.json())
+                    .then(personnel => {
+                        personnel.forEach(person => {
+                            const option = document.createElement('option');
+                            option.value = person.id;
+                            option.textContent = person.fullName;
+                            personnelSelect.appendChild(option);
+                        });
+                    })
+                    .catch(error => console.error('Error loading personnel:', error));
+            }
+        }
+
+        // Load personnel on page load if customer is already selected
+        document.addEventListener('DOMContentLoaded', function() {
+            const customerSelect = document.getElementById('customerId');
+            if (customerSelect.value) {
+                loadCustomerPersonnel(customerSelect.value);
+            }
+        });
+    </script>
+</body>
+</html>

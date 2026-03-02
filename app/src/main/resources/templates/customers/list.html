@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head th:replace="layout/main :: head">
+    <title>Customers - Zeus IMS</title>
+</head>
+<body>
+    <nav th:replace="layout/main :: navbar"></nav>
+
+    <main class="container-fluid py-4">
+        <div th:replace="layout/main :: alerts"></div>
+
+        <div class="row mb-4">
+            <div class="col-md-6">
+                <h1 class="h3 mb-0">
+                    <i class="fas fa-building me-2 text-primary"></i>Customer Management
+                </h1>
+                <p class="text-muted">Manage customer companies and their personnel</p>
+            </div>
+            <div class="col-md-6 text-end">
+                <a th:href="@{/customers/new}" class="btn btn-primary">
+                    <i class="fas fa-plus me-2"></i>Add New Customer
+                </a>
+            </div>
+        </div>
+
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-light">
+                <div class="row align-items-center">
+                    <div class="col-md-6">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-list me-2"></i>All Customers
+                            <span class="badge bg-primary ms-2" th:text="${totalCustomers}">0</span>
+                        </h5>
+                    </div>
+                    <div class="col-md-6">
+                        <form th:action="@{/customers}" method="get" class="d-flex">
+                            <input type="text" name="search" th:value="${search}" class="form-control me-2"
+                                   placeholder="Search customers...">
+                            <button type="submit" class="btn btn-outline-primary">
+                                <i class="fas fa-search"></i>
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body p-0">
+                <div th:if="${customers.empty}" class="text-center py-5">
+                    <i class="fas fa-building fa-3x text-muted mb-3"></i>
+                    <h5 class="text-muted">No customers found</h5>
+                    <p class="text-muted">
+                        <span th:if="${search}">No customers match your search criteria.</span>
+                        <span th:unless="${search}">Start by adding your first customer.</span>
+                    </p>
+                    <a th:href="@{/customers/new}" class="btn btn-primary" th:unless="${search}">
+                        <i class="fas fa-plus me-2"></i>Add First Customer
+                    </a>
+                </div>
+
+                <div th:unless="${customers.empty}" class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Company Details</th>
+                                <th>Contact Information</th>
+                                <th>Location</th>
+                                <th>Status</th>
+                                <th>Created</th>
+                                <th class="text-center">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="customer : ${customers}">
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <div class="avatar-circle me-3 bg-info">
+                                            <i class="fas fa-building"></i>
+                                        </div>
+                                        <div>
+                                            <div class="fw-bold" th:text="${customer.companyName}">Company Name</div>
+                                            <div class="text-muted small" th:if="${customer.description}"
+                                                 th:text="${#strings.abbreviate(customer.description, 60)}">Description</div>
+                                            <div class="text-muted small" th:if="${customer.websiteUrl}">
+                                                <i class="fas fa-globe me-1"></i>
+                                                <a th:href="${customer.websiteUrl}" target="_blank"
+                                                   th:text="${customer.websiteUrl}" class="text-decoration-none">Website</a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div th:if="${customer.contactNumber}" class="mb-1">
+                                        <i class="fas fa-phone me-1 text-muted"></i>
+                                        <span th:text="${customer.contactNumber}">Contact</span>
+                                    </div>
+                                    <div th:if="${customer.email}" class="mb-1">
+                                        <i class="fas fa-envelope me-1 text-muted"></i>
+                                        <a th:href="'mailto:' + ${customer.email}" th:text="${customer.email}"
+                                           class="text-decoration-none">Email</a>
+                                    </div>
+                                    <div th:if="${customer.secondaryContact}" class="text-muted small">
+                                        <i class="fas fa-phone-alt me-1"></i>
+                                        <span th:text="${customer.secondaryContact}">Secondary</span>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div th:if="${customer.fullAddress}" th:text="${customer.fullAddress}"
+                                         class="text-muted small">Address</div>
+                                    <div th:unless="${customer.fullAddress}" class="text-muted small">
+                                        <i class="fas fa-map-marker-alt me-1"></i>No address provided
+                                    </div>
+                                </td>
+                                <td>
+                                    <span th:if="${customer.active}" class="badge bg-success">
+                                        <i class="fas fa-check-circle me-1"></i>Active
+                                    </span>
+                                    <span th:unless="${customer.active}" class="badge bg-danger">
+                                        <i class="fas fa-times-circle me-1"></i>Inactive
+                                    </span>
+                                </td>
+                                <td>
+                                    <span th:text="${#temporals.format(customer.createdAt, 'MMM dd, yyyy')}"
+                                          class="text-muted small">Created Date</span>
+                                    <div th:if="${customer.createdBy}" class="text-muted small">
+                                        by <span th:text="${customer.createdBy}">creator</span>
+                                    </div>
+                                </td>
+                                <td class="text-center">
+                                    <div class="btn-group" role="group">
+                                        <a th:href="@{/customers/view/{id}(id=${customer.id})}"
+                                           class="btn btn-sm btn-outline-info" title="View Details">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        <a th:href="@{/customers/edit/{id}(id=${customer.id})}"
+                                           class="btn btn-sm btn-outline-primary" title="Edit Customer">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        <a th:href="@{/customers/{id}/personnel(id=${customer.id})}"
+                                           class="btn btn-sm btn-outline-success" title="Manage Personnel">
+                                            <i class="fas fa-users"></i>
+                                        </a>
+                                        <button type="button" class="btn btn-sm btn-outline-danger delete-customer-btn"
+                                                th:data-customer-id="${customer.id}"
+                                                th:data-company-name="${customer.companyName}"
+                                                th:disabled="${!customer.active}"
+                                                title="Delete Customer">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Delete Confirmation Modal -->
+    <div class="modal fade" id="deleteModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="fas fa-exclamation-triangle text-warning me-2"></i>Confirm Deletion
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Are you sure you want to deactivate customer <strong id="deleteCompanyName"></strong>?</p>
+                    <p class="text-muted small">This action will disable the customer and all their personnel, but preserve their data.</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <form id="deleteForm" method="post" class="d-inline">
+                        <button type="submit" class="btn btn-danger">
+                            <i class="fas fa-trash me-2"></i>Deactivate Customer
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <style>
+        .avatar-circle {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+        }
+        .table-hover tbody tr:hover {
+            background-color: rgba(0, 123, 255, 0.05);
+        }
+    </style>
+
+    <script>
+        document.querySelectorAll('.delete-customer-btn').forEach(button => {
+            button.addEventListener('click', function() {
+                const customerId = this.getAttribute('data-customer-id');
+                const companyName = this.getAttribute('data-company-name');
+                document.getElementById('deleteCompanyName').textContent = companyName;
+                document.getElementById('deleteForm').action = '/customers/delete/' + customerId;
+                new bootstrap.Modal(document.getElementById('deleteModal')).show();
+            });
+        });
+    </script>
+
+    <script th:replace="layout/main :: alert-js"></script>
+
+    <div th:replace="layout/main :: js-bundle"></div>
+</body>
+</html>

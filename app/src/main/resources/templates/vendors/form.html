@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="layout/main :: head">
+    <title th:text="${pageTitle} + ' - Zeus IMS'">Vendor Form - Zeus IMS</title>
+</head>
+<body>
+    <nav th:replace="layout/main :: navbar"></nav>
+
+    <main class="container-fluid py-4">
+        <div th:replace="layout/main :: alerts"></div>
+
+        <div class="row mb-4">
+            <div class="col-md-8">
+                <h1 class="h3 mb-0">
+                    <i class="fas fa-truck-plus me-2 text-primary" th:if="!${isEdit}"></i>
+                    <i class="fas fa-truck-edit me-2 text-primary" th:if="${isEdit}"></i>
+                    <span th:text="${pageTitle}">Vendor Form</span>
+                </h1>
+                <p class="text-muted" th:text="${isEdit ? 'Update vendor information and details' : 'Add a new vendor to the system'}">Form description</p>
+            </div>
+            <div class="col-md-4 text-end">
+                <a th:href="@{/vendors}" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left me-2"></i>Back to Vendors
+                </a>
+            </div>
+        </div>
+
+        <div class="row justify-content-center">
+            <div class="col-lg-10">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-header bg-light">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-truck me-2"></i>Company Information
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <form th:action="${isEdit ? '/vendors/edit/' + vendorDTO.id : '/vendors/new'}"
+                              th:object="${vendorDTO}" method="post" novalidate>
+
+                            <!-- Basic Information -->
+                            <div class="row g-3 mb-4">
+                                <div class="col-12">
+                                    <h6 class="text-primary border-bottom pb-2">
+                                        <i class="fas fa-info-circle me-2"></i>Basic Information
+                                    </h6>
+                                </div>
+
+                                <div class="col-md-6">
+                                    <label for="companyName" class="form-label">Company Name <span class="text-danger">*</span></label>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="fas fa-truck"></i></span>
+                                        <input type="text" class="form-control" id="companyName" th:field="*{companyName}"
+                                               th:classappend="${#fields.hasErrors('companyName')} ? 'is-invalid' : ''"
+                                               placeholder="Enter company name" required>
+                                        <div class="invalid-feedback" th:if="${#fields.hasErrors('companyName')}" th:errors="*{companyName}">
+                                            Company name error
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="col-md-6">
+                                    <label for="websiteUrl" class="form-label">Website URL</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="fas fa-globe"></i></span>
+                                        <input type="url" class="form-control" id="websiteUrl" th:field="*{websiteUrl}"
+                                               placeholder="https://www.company.com">
+                                    </div>
+                                </div>
+
+                                <div class="col-12">
+                                    <label for="description" class="form-label">Description</label>
+                                    <textarea class="form-control" id="description" th:field="*{description}" rows="3"
+                                              placeholder="Brief description of the vendor company..."></textarea>
+                                </div>
+                            </div>
+
+                            <!-- Address Information -->
+                            <div class="row g-3 mb-4">
+                                <div class="col-12">
+                                    <h6 class="text-primary border-bottom pb-2">
+                                        <i class="fas fa-map-marker-alt me-2"></i>Address Information
+                                    </h6>
+                                </div>
+
+                                <div class="col-md-6">
+                                    <label for="addressLine1" class="form-label">Address Line 1</label>
+                                    <input type="text" class="form-control" id="addressLine1" th:field="*{addressLine1}"
+                                           placeholder="Street address, building, etc.">
+                                </div>
+
+                                <div class="col-md-6">
+                                    <label for="addressLine2" class="form-label">Address Line 2</label>
+                                    <input type="text" class="form-control" id="addressLine2" th:field="*{addressLine2}"
+                                           placeholder="Apartment, suite, unit, etc.">
+                                </div>
+
+                                <div class="col-md-4">
+                                    <label for="city" class="form-label">City</label>
+                                    <input type="text" class="form-control" id="city" th:field="*{city}"
+                                           placeholder="City" list="cityList">
+                                    <datalist id="cityList">
+                                        <option th:each="city : ${cities}" th:value="${city}"></option>
+                                    </datalist>
+                                </div>
+
+                                <div class="col-md-4">
+                                    <label for="state" class="form-label">State/Province</label>
+                                    <input type="text" class="form-control" id="state" th:field="*{state}"
+                                           placeholder="State or Province" list="stateList">
+                                    <datalist id="stateList">
+                                        <option th:each="state : ${states}" th:value="${state}"></option>
+                                    </datalist>
+                                </div>
+
+                                <div class="col-md-4">
+                                    <label for="postalCode" class="form-label">Postal Code</label>
+                                    <input type="text" class="form-control" id="postalCode" th:field="*{postalCode}"
+                                           placeholder="ZIP/Postal Code">
+                                </div>
+
+                                <div class="col-md-6">
+                                    <label for="country" class="form-label">Country</label>
+                                    <input type="text" class="form-control" id="country" th:field="*{country}"
+                                           placeholder="Country" list="countryList">
+                                    <datalist id="countryList">
+                                        <option th:each="country : ${countries}" th:value="${country}"></option>
+                                    </datalist>
+                                </div>
+                            </div>
+
+                            <!-- Contact Information -->
+                            <div class="row g-3 mb-4">
+                                <div class="col-12">
+                                    <h6 class="text-primary border-bottom pb-2">
+                                        <i class="fas fa-phone me-2"></i>Contact Information
+                                    </h6>
+                                </div>
+
+                                <div class="col-md-4">
+                                    <label for="contactNumber" class="form-label">Primary Contact</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="fas fa-phone"></i></span>
+                                        <input type="tel" class="form-control" id="contactNumber" th:field="*{contactNumber}"
+                                               placeholder="Primary phone number">
+                                    </div>
+                                </div>
+
+                                <div class="col-md-4">
+                                    <label for="secondaryContact" class="form-label">Secondary Contact</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="fas fa-phone-alt"></i></span>
+                                        <input type="tel" class="form-control" id="secondaryContact" th:field="*{secondaryContact}"
+                                               placeholder="Secondary phone number">
+                                    </div>
+                                </div>
+
+                                <div class="col-md-4">
+                                    <label for="email" class="form-label">Email Address</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="fas fa-envelope"></i></span>
+                                        <input type="email" class="form-control" id="email" th:field="*{email}"
+                                               th:classappend="${#fields.hasErrors('email')} ? 'is-invalid' : ''"
+                                               placeholder="company@example.com">
+                                        <div class="invalid-feedback" th:if="${#fields.hasErrors('email')}" th:errors="*{email}">
+                                            Email error
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Status -->
+                            <div class="row g-3 mb-4">
+                                <div class="col-12">
+                                    <h6 class="text-primary border-bottom pb-2">
+                                        <i class="fas fa-toggle-on me-2"></i>Status
+                                    </h6>
+                                </div>
+
+                                <div class="col-md-6">
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input" type="checkbox" id="active" th:field="*{active}">
+                                        <label class="form-check-label" for="active">
+                                            <span th:if="*{active}">Active Vendor</span>
+                                            <span th:unless="*{active}">Inactive Vendor</span>
+                                        </label>
+                                    </div>
+                                    <div class="form-text">Inactive vendors are hidden from most operations</div>
+                                </div>
+                            </div>
+
+                            <hr class="my-4">
+
+                            <div class="d-flex justify-content-between">
+                                <a th:href="@{/vendors}" class="btn btn-outline-secondary">
+                                    <i class="fas fa-times me-2"></i>Cancel
+                                </a>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-save me-2"></i>
+                                    <span th:text="${isEdit ? 'Update Vendor' : 'Create Vendor'}">Save</span>
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Real-time validation
+        document.addEventListener('DOMContentLoaded', function() {
+            const companyName = document.getElementById('companyName');
+            const email = document.getElementById('email');
+
+            // Company name availability check
+            let companyNameTimeout;
+            companyName.addEventListener('input', function() {
+                clearTimeout(companyNameTimeout);
+                companyNameTimeout = setTimeout(function() {
+                    checkCompanyNameAvailability();
+                }, 500);
+            });
+
+            // Email validation
+            email.addEventListener('input', function() {
+                validateEmail();
+            });
+        });
+
+        function checkCompanyNameAvailability() {
+            const companyName = document.getElementById('companyName').value;
+            const vendorId = [[${vendorDTO.id}]];
+
+            if (companyName.length >= 3) {
+                fetch(`/vendors/check-company-name?companyName=${encodeURIComponent(companyName)}&vendorId=${vendorId || ''}`)
+                    .then(response => response.json())
+                    .then(available => {
+                        const companyNameField = document.getElementById('companyName');
+                        if (!available) {
+                            companyNameField.classList.add('is-invalid');
+                            companyNameField.classList.remove('is-valid');
+                        } else {
+                            companyNameField.classList.remove('is-invalid');
+                            companyNameField.classList.add('is-valid');
+                        }
+                    });
+            }
+        }
+
+        function validateEmail() {
+            const email = document.getElementById('email');
+            const emailValue = email.value;
+
+            if (emailValue && !emailValue.includes('@')) {
+                email.classList.add('is-invalid');
+                email.classList.remove('is-valid');
+            } else if (emailValue) {
+                email.classList.remove('is-invalid');
+                email.classList.add('is-valid');
+            }
+        }
+    </script>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script th:replace="layout/main :: alert-js"></script>
+
+    <div th:replace="layout/main :: js-bundle"></div>
+</body>
+</html>
