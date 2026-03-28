@@ -22,14 +22,17 @@ public class OrderItemService {
     private final OrderItemRepository orderItemRepository;
     private final OrderRepository orderRepository;
     private final ProductRepository productRepository;
+    private final OrderItemPartService orderItemPartService;
 
     @Autowired
     public OrderItemService(OrderItemRepository orderItemRepository,
                            OrderRepository orderRepository,
-                           ProductRepository productRepository) {
+                           ProductRepository productRepository,
+                           OrderItemPartService orderItemPartService) {
         this.orderItemRepository = orderItemRepository;
         this.orderRepository = orderRepository;
         this.productRepository = productRepository;
+        this.orderItemPartService = orderItemPartService;
     }
 
     public List<OrderItemDTO> getItemsByOrderId(Long orderId) {
@@ -47,6 +50,9 @@ public class OrderItemService {
     public OrderItemDTO createOrderItem(OrderItemDTO orderItemDTO) {
         OrderItem orderItem = convertToEntity(orderItemDTO);
         OrderItem savedItem = orderItemRepository.save(orderItem);
+
+        // Copy parts from product to order item
+        orderItemPartService.copyPartsFromProduct(savedItem.getId(), "system");
 
         // Update order total amount
         updateOrderTotalAmount(orderItem.getOrder().getId());
@@ -115,6 +121,7 @@ public class OrderItemService {
         dto.setTotalPrice(orderItem.getTotalPrice());
         dto.setSpecifications(orderItem.getSpecifications());
         dto.setNotes(orderItem.getNotes());
+        dto.setProductStatus(orderItem.getProductStatus() != null ? orderItem.getProductStatus().name() : OrderItem.ProductStatus.PENDING.name());
         dto.setCreatedAt(orderItem.getCreatedAt());
         dto.setUpdatedAt(orderItem.getUpdatedAt());
         return dto;
@@ -157,6 +164,9 @@ public class OrderItemService {
         }
         if (dto.getNotes() != null) {
             orderItem.setNotes(dto.getNotes());
+        }
+        if (dto.getProductStatus() != null) {
+            orderItem.setProductStatus(OrderItem.ProductStatus.valueOf(dto.getProductStatus()));
         }
     }
 }

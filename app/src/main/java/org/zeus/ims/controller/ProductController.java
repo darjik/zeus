@@ -22,9 +22,9 @@ import org.zeus.ims.service.ProductPartService;
 import org.zeus.ims.service.ProductService;
 import org.zeus.ims.service.VendorService;
 
-import javax.persistence.EntityNotFoundException;
-import javax.servlet.http.HttpSession;
-import javax.validation.Valid;
+import jakarta.persistence.EntityNotFoundException;
+import jakarta.servlet.http.HttpSession;
+import jakarta.validation.Valid;
 import java.util.Arrays;
 import java.util.List;
 import org.slf4j.Logger;
@@ -35,8 +35,6 @@ import org.slf4j.LoggerFactory;
 @RequiredArgsConstructor
 @Slf4j
 public class ProductController {
-
-    private static final Logger log = LoggerFactory.getLogger(ProductController.class);
 
     private final ProductService productService;
     private final ProductPartService productPartService;

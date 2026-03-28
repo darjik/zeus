@@ -7,8 +7,8 @@
 
 plugins {
     // Apply the application plugin to add support for building a CLI application in Java.
-    id 'org.springframework.boot' version '2.7.18'
-    id 'io.spring.dependency-management' version '1.0.15.RELEASE'
+    id 'org.springframework.boot' version '3.2.3'
+    id 'io.spring.dependency-management' version '1.1.4'
     id 'java'
 }
 
@@ -28,18 +28,19 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-security'
     implementation 'org.springframework.boot:spring-boot-starter-validation'
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
+    implementation 'jakarta.annotation:jakarta.annotation-api:2.1.1'
 
     // Thymeleaf Security Integration
-    implementation 'org.thymeleaf.extras:thymeleaf-extras-springsecurity5'
+    implementation 'org.thymeleaf.extras:thymeleaf-extras-springsecurity6'
 
     // Lombok - for reducing boilerplate code
-    implementation 'org.projectlombok:lombok:1.18.30'
-    annotationProcessor 'org.projectlombok:lombok:1.18.30'
-    testImplementation 'org.projectlombok:lombok:1.18.30'
-    testAnnotationProcessor 'org.projectlombok:lombok:1.18.30'
+    implementation 'org.projectlombok:lombok:1.18.32'
+    annotationProcessor 'org.projectlombok:lombok:1.18.32'
+    testImplementation 'org.projectlombok:lombok:1.18.32'
+    testAnnotationProcessor 'org.projectlombok:lombok:1.18.32'
 
-    // Database - specify version for MySQL connector
-    runtimeOnly 'mysql:mysql-connector-java:8.0.33'
+    // Database - MySQL connector for MySQL 8
+    runtimeOnly 'com.mysql:mysql-connector-j:8.3.0'
 
     // Development tools
     developmentOnly 'org.springframework.boot:spring-boot-devtools'
@@ -57,7 +58,7 @@ dependencies {
 
 java {
     toolchain {
-        languageVersion = JavaLanguageVersion.of(11)
+        languageVersion = JavaLanguageVersion.of(21)
     }
 }
 

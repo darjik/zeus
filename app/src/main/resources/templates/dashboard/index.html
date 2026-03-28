@@ -88,7 +88,7 @@
                         <div class="card-body">
                             <div class="d-flex justify-content-between">
                                 <div>
-                                    <h4 class="fw-bold mb-0" th:text="${#numbers.formatCurrency(monthlyRevenue ?: 0)}">₹0</h4>
+                                    <h4 class="fw-bold mb-0" th:text="${@currencyFormattingService.formatCurrency(monthlyRevenue ?: 0)}">₹0</h4>
                                     <p class="mb-0">Monthly Revenue</p>
                                 </div>
                                 <div class="align-self-center">
@@ -96,7 +96,7 @@
                                 </div>
                             </div>
                             <small>
-                                Total: <span th:text="${#numbers.formatCurrency(totalRevenue ?: 0)}">₹0</span>
+                                Total: <span th:text="${@currencyFormattingService.formatCurrency(totalRevenue ?: 0)}">₹0</span>
                             </small>
                         </div>
                     </div>
@@ -318,7 +318,7 @@
                         <div class="card-body">
                             <div class="d-flex justify-content-between">
                                 <div>
-                                    <h4 class="fw-bold mb-0" th:text="${#numbers.formatCurrency(monthlyRevenue ?: 0)}">₹0</h4>
+                                    <h4 class="fw-bold mb-0" th:text="${@currencyFormattingService.formatCurrency(monthlyRevenue ?: 0)}">₹0</h4>
                                     <p class="mb-0">Monthly Revenue</p>
                                 </div>
                                 <div class="align-self-center">
@@ -333,7 +333,7 @@
                         <div class="card-body">
                             <div class="d-flex justify-content-between">
                                 <div>
-                                    <h4 class="fw-bold mb-0" th:text="${#numbers.formatCurrency(totalRevenue ?: 0)}">₹0</h4>
+                                    <h4 class="fw-bold mb-0" th:text="${@currencyFormattingService.formatCurrency(totalRevenue ?: 0)}">₹0</h4>
                                     <p class="mb-0">Total Revenue</p>
                                 </div>
                                 <div class="align-self-center">
@@ -348,7 +348,7 @@
                         <div class="card-body">
                             <div class="d-flex justify-content-between">
                                 <div>
-                                    <h4 class="fw-bold mb-0" th:text="${#numbers.formatCurrency(outstandingAmount ?: 0)}">₹0</h4>
+                                    <h4 class="fw-bold mb-0" th:text="${@currencyFormattingService.formatCurrency(outstandingAmount ?: 0)}">₹0</h4>
                                     <p class="mb-0">Outstanding Amount</p>
                                 </div>
                                 <div class="align-self-center">

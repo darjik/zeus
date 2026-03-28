@@ -252,10 +252,10 @@ applyTo: "**"
 ---
 
 ## Project Overview for context
-Monolithic Spring Boot application using Java 11, Thymeleaf, MySQL 8, with Gradle build system.
+Monolithic Spring Boot application using Java 21, Thymeleaf, MySQL 8, with Gradle build system.
 
 ## Technology Stack
-- **Backend**: Java 11, Spring Boot, Spring MVC, Spring Data JPA
+- **Backend**: Java 21, Spring Boot, Spring MVC, Spring Data JPA
 - **Frontend**: Thymeleaf, HTML5, CSS3, Bootstrap
 - **Database**: MySQL 8
 - **Build Tool**: Gradle

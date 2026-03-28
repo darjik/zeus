@@ -19,8 +19,8 @@ import org.zeus.ims.dto.VendorPersonnelDTO;
 import org.zeus.ims.service.VendorPersonnelService;
 import org.zeus.ims.service.VendorService;
 
-import javax.persistence.EntityNotFoundException;
-import javax.validation.Valid;
+import jakarta.persistence.EntityNotFoundException;
+import jakarta.validation.Valid;
 import java.util.Arrays;
 import java.util.List;
 

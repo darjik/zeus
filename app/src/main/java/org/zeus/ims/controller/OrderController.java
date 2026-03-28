@@ -21,6 +21,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.zeus.ims.dto.OrderDTO;
 import org.zeus.ims.dto.OrderDocumentDTO;
 import org.zeus.ims.dto.OrderItemDTO;
@@ -33,9 +34,13 @@ import org.zeus.ims.service.OrderItemService;
 import org.zeus.ims.service.OrderService;
 import org.zeus.ims.service.ProductService;
 import org.zeus.ims.service.OrderTaskService;
+import org.zeus.ims.service.PurchaseOrderService;
+import org.zeus.ims.service.VendorService;
+import org.zeus.ims.service.OrderItemPartService;
 import org.zeus.ims.validation.CreateOrder;
 import org.zeus.ims.validation.UpdateOrder;
 import java.io.IOException;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
@@ -51,6 +56,9 @@ public class OrderController {
     private final ProductService productService;
     private final EnquiryService enquiryService;
     private final OrderTaskService orderTaskService;
+    private final VendorService vendorService;
+    private final PurchaseOrderService purchaseOrderService;
+    private final OrderItemPartService orderItemPartService;
 
     @Autowired
     public OrderController(OrderService orderService,
@@ -59,7 +67,10 @@ public class OrderController {
                           CustomerService customerService,
                           ProductService productService,
                           EnquiryService enquiryService,
-                          OrderTaskService orderTaskService) {
+                          OrderTaskService orderTaskService,
+                          VendorService vendorService,
+                          PurchaseOrderService purchaseOrderService,
+                          OrderItemPartService orderItemPartService) {
         this.orderService = orderService;
         this.orderItemService = orderItemService;
         this.orderDocumentService = orderDocumentService;
@@ -67,6 +78,9 @@ public class OrderController {
         this.productService = productService;
         this.enquiryService = enquiryService;
         this.orderTaskService = orderTaskService;
+        this.vendorService = vendorService;
+        this.purchaseOrderService = purchaseOrderService;
+        this.orderItemPartService = orderItemPartService;
     }
 
     @GetMapping
@@ -124,6 +138,8 @@ public class OrderController {
         OrderDTO order = orderOpt.get();
         List<OrderItemDTO> orderItems = orderItemService.getItemsByOrderId(id);
         List<OrderDocumentDTO> orderDocuments = orderDocumentService.getDocumentsByOrderId(id);
+        model.addAttribute("vendors", vendorService.getActiveVendors());
+        model.addAttribute("purchaseOrders", purchaseOrderService.getPurchaseOrdersByOrderId(id));
 
         model.addAttribute("order", order);
         model.addAttribute("orderItems", orderItems);
@@ -376,6 +392,42 @@ public class OrderController {
             redirectAttributes.addFlashAttribute("success", "Document deleted successfully");
         } catch (Exception ex) {
             redirectAttributes.addFlashAttribute("error", "Failed to delete document: " + ex.getMessage());
+        }
+        return "redirect:/orders/" + orderId;
+    }
+
+    @PostMapping("/{orderId}/purchase-orders")
+    @PreAuthorize("hasAnyAuthority('OWNER', 'SALES', 'PRODUCTION_MANAGER')")
+    public String createPurchaseOrder(@PathVariable Long orderId,
+                                      @RequestParam Long vendorId,
+                                      @RequestParam(required = false) List<Long> orderItemIds,
+                                      @RequestParam(required = false) String notes,
+                                      @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate expectedDeliveryDate,
+                                      Authentication authentication,
+                                      RedirectAttributes redirectAttributes) {
+        try {
+            String username = authentication.getName();
+            purchaseOrderService.createPurchaseOrder(orderId, vendorId, orderItemIds, expectedDeliveryDate, notes, username);
+            redirectAttributes.addFlashAttribute("success", "Purchase order created successfully");
+        } catch (Exception ex) {
+            redirectAttributes.addFlashAttribute("error", "Failed to create purchase order: " + ex.getMessage());
+        }
+        return "redirect:/orders/" + orderId;
+    }
+
+    @PostMapping("/{orderId}/items/{itemId}/status")
+    @PreAuthorize("hasAnyAuthority('OWNER', 'SALES', 'PRODUCTION_MANAGER')")
+    public String updateProductStatus(@PathVariable Long orderId,
+                                      @PathVariable Long itemId,
+                                      @RequestParam String productStatus,
+                                      RedirectAttributes redirectAttributes) {
+        try {
+            OrderItemDTO itemDTO = new OrderItemDTO();
+            itemDTO.setProductStatus(productStatus);
+            orderItemService.updateOrderItem(itemId, itemDTO);
+            redirectAttributes.addFlashAttribute("success", "Product status updated successfully");
+        } catch (Exception ex) {
+            redirectAttributes.addFlashAttribute("error", "Failed to update product status: " + ex.getMessage());
         }
         return "redirect:/orders/" + orderId;
     }

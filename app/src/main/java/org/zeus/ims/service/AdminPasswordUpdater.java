@@ -8,7 +8,7 @@ import org.springframework.stereotype.Component;
 import org.zeus.ims.entity.User;
 import org.zeus.ims.repository.UserRepository;
 
-import javax.annotation.PostConstruct;
+import jakarta.annotation.PostConstruct;
 import java.util.Optional;
 
 @Component

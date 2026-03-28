@@ -7,7 +7,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.zeus.ims.entity.*;
 import org.zeus.ims.repository.*;
 
-import javax.annotation.PostConstruct;
+import jakarta.annotation.PostConstruct;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -425,7 +425,8 @@ public class SampleDataService {
             "Delivery timeline confirmed with production team"
         );
 
-        for (int i = 0; i < random.nextInt(5) + 3; i++) { // 3-7 conversations per enquiry
+        for (int i = 0; i < random.nextInt(5) + 3; // 3-7 conversations per enquiry
+             i++) {
             EnquiryConversation conversation = new EnquiryConversation();
             conversation.setEnquiry(enquiry);
             conversation.setMessage(messages.get(random.nextInt(messages.size())));

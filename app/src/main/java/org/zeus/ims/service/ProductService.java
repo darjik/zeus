@@ -16,7 +16,7 @@ import org.zeus.ims.repository.ProductRepository;
 import org.zeus.ims.repository.ProductPartRepository;
 import org.zeus.ims.repository.VendorRepository;
 
-import javax.persistence.EntityNotFoundException;
+import jakarta.persistence.EntityNotFoundException;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -34,7 +34,6 @@ import java.util.stream.Collectors;
 @Slf4j
 public class ProductService {
 
-    private static final Logger log = LoggerFactory.getLogger(ProductService.class);
 
     private final ProductRepository productRepository;
     private final ProductPartRepository productPartRepository;

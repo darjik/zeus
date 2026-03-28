@@ -26,13 +26,13 @@
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav me-auto">
                     <li class="nav-item">
-                        <a class="nav-link" th:href="@{/dashboard}" th:classappend="${#request.requestURI == '/dashboard' ? 'active' : ''}">
+                        <a class="nav-link" th:href="@{/dashboard}" th:classappend="${request != null and request.requestURI == '/dashboard' ? 'active' : ''}">
                             <i class="fas fa-tachometer-alt me-1"></i>Dashboard
                         </a>
                     </li>
 
                     <li class="nav-item" sec:authorize="hasAuthority('OWNER')">
-                        <a class="nav-link" th:href="@{/users}" th:classappend="${#strings.startsWith(#request.requestURI, '/users') ? 'active' : ''}">
+                        <a class="nav-link" th:href="@{/users}" th:classappend="${request != null and request.requestURI != null and request.requestURI.startsWith('/users') ? 'active' : ''}">
                             <i class="fas fa-users me-1"></i>Users
                         </a>
                     </li>

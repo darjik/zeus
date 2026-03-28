@@ -169,22 +169,47 @@
                                         <th>Quantity</th>
                                         <th>Unit Price</th>
                                         <th>Total</th>
+                                        <th>Status</th>
                                         <th>Specifications</th>
                                         <th class="text-center">Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     <tr th:each="item : ${orderItems}">
-                                        <td th:text="${item.productName}">Product Name</td>
+                                        <td>
+                                            <span th:text="${item.productName}">Product Name</span>
+                                            <br>
+                                            <a th:href="@{/orders/{orderId}/items/{itemId}/parts(orderId=${order.id}, itemId=${item.id})}"
+                                               class="btn btn-sm btn-outline-info mt-1"
+                                               sec:authorize="hasAnyAuthority('OWNER', 'SALES', 'PRODUCTION_MANAGER')">
+                                                <i class="fas fa-cogs me-1"></i>Manage Parts
+                                            </a>
+                                        </td>
                                         <td th:text="${item.quantity}">10</td>
                                         <td th:if="${item.unitPrice}" th:text="'₹ ' + ${#numbers.formatDecimal(item.unitPrice, 0, 2)}">₹ 5,000.00</td>
                                         <td th:unless="${item.unitPrice}" class="text-muted">Not set</td>
                                         <td th:if="${item.totalPrice}" class="fw-bold" th:text="'₹ ' + ${#numbers.formatDecimal(item.totalPrice, 0, 2)}">₹ 50,000.00</td>
                                         <td th:unless="${item.totalPrice}" class="text-muted">Not calculated</td>
+                                        <td>
+                                            <form th:action="@{/orders/{orderId}/items/{itemId}/status(orderId=${order.id}, itemId=${item.id})}"
+                                                  method="post" class="d-inline" sec:authorize="hasAnyAuthority('OWNER', 'SALES', 'PRODUCTION_MANAGER')">
+                                                <select name="productStatus" class="form-select form-select-sm"
+                                                        onchange="this.form.submit()" style="width: auto;">
+                                                    <option value="PENDING" th:selected="${item.productStatus == 'PENDING'}">Pending</option>
+                                                    <option value="PROCURING" th:selected="${item.productStatus == 'PROCURING'}">Procuring</option>
+                                                    <option value="IN_ASSEMBLY" th:selected="${item.productStatus == 'IN_ASSEMBLY'}">In Assembly</option>
+                                                    <option value="IN_POWDER_COATING" th:selected="${item.productStatus == 'IN_POWDER_COATING'}">In Powder Coating</option>
+                                                    <option value="READY" th:selected="${item.productStatus == 'READY'}">Ready</option>
+                                                    <option value="PACKED" th:selected="${item.productStatus == 'PACKED'}">Packed</option>
+                                                </select>
+                                            </form>
+                                            <span th:unless="${#authorization.expression('hasAnyAuthority(''OWNER'', ''SALES'', ''PRODUCTION_MANAGER'')')}"
+                                                  class="badge bg-secondary" th:text="${item.productStatus}">Status</span>
+                                        </td>
                                         <td th:text="${item.specifications ?: 'Standard'}">Standard</td>
-                                        <td class="text-center">
+                                        <td class="text-center" sec:authorize="hasAnyAuthority('OWNER', 'SALES')">
                                             <form th:action="@{/orders/{orderId}/items/{itemId}/delete(orderId=${order.id}, itemId=${item.id})}"
-                                                  method="post" class="d-inline" sec:authorize="hasAnyAuthority('OWNER', 'SALES')">
+                                                  method="post" class="d-inline">
                                                 <button type="submit" class="btn btn-outline-danger btn-sm"
                                                         onclick="return confirm('Are you sure you want to remove this item?')">
                                                     <i class="fas fa-trash"></i>
@@ -263,6 +288,54 @@
                             <i class="fas fa-file fa-3x text-muted mb-3"></i>
                             <h6 class="text-muted">No documents uploaded</h6>
                             <p class="text-muted small">Upload CAD drawings, specifications, or other order-related documents</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-file-invoice-dollar me-2"></i>Purchase Orders
+                        </h5>
+                        <button type="button" class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#createPurchaseOrderModal"
+                                sec:authorize="hasAnyAuthority('OWNER', 'SALES', 'PRODUCTION_MANAGER')" th:if="${orderItems.size() > 0}">
+                            <i class="fas fa-plus me-1"></i>Create PO
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        <div th:if="${purchaseOrders.size() > 0}" class="table-responsive">
+                            <table class="table table-striped mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>PO Number</th>
+                                        <th>Vendor</th>
+                                        <th>Status</th>
+                                        <th>Expected Delivery</th>
+                                        <th>Created On</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr th:each="po : ${purchaseOrders}">
+                                        <td th:text="${po.poNumber}">PO-ORD-123</td>
+                                        <td th:text="${po.vendorName}">Vendor Name</td>
+                                        <td>
+                                            <span class="badge"
+                                                  th:classappend="${po.status.name() == 'CREATED' ? 'bg-info' :
+                                                                  po.status.name() == 'ORDERED' ? 'bg-primary' :
+                                                                  po.status.name() == 'PARTIALLY_RECEIVED' ? 'bg-warning' :
+                                                                  po.status.name() == 'RECEIVED' ? 'bg-success' : 'bg-secondary'}"
+                                                  th:text="${po.status.displayName}">Status</span>
+                                        </td>
+                                        <td th:text="${po.expectedDeliveryDate != null ? #temporals.format(po.expectedDeliveryDate, 'dd/MM/yyyy') : 'TBD'}">15/02/2025</td>
+                                        <td th:text="${#temporals.format(po.createdAt, 'dd/MM/yyyy')}">01/02/2025</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div th:unless="${purchaseOrders.size() > 0}" class="text-center py-4">
+                            <i class="fas fa-file-contract fa-3x text-muted mb-3"></i>
+                            <h6 class="text-muted">No purchase orders created</h6>
+                            <p class="text-muted small">Generate purchase orders once the part list is ready</p>
                         </div>
                     </div>
                 </div>
@@ -431,6 +504,65 @@
                             <button type="submit" class="btn btn-danger">Delete Order</button>
                         </form>
                     </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Create Purchase Order Modal -->
+        <div class="modal fade" id="createPurchaseOrderModal" tabindex="-1">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Create Purchase Order</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <form th:action="@{/orders/{orderId}/purchase-orders(orderId=${order.id})}" method="post">
+                        <div class="modal-body">
+                            <div class="mb-3">
+                                <label for="poVendorId" class="form-label">Vendor *</label>
+                                <select id="poVendorId" name="vendorId" class="form-select" required>
+                                    <option value="">Select Vendor</option>
+                                    <option th:each="vendor : ${vendors}"
+                                            th:value="${vendor.id}"
+                                            th:text="${vendor.companyName}">Vendor Name</option>
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label for="poExpectedDeliveryDate" class="form-label">Expected Delivery Date</label>
+                                <input type="date" id="poExpectedDeliveryDate" name="expectedDeliveryDate" class="form-control">
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Select Order Items *</label>
+                                <div class="border rounded p-3" style="max-height: 300px; overflow-y: auto;">
+                                    <div th:if="${orderItems.size() > 0}">
+                                        <div class="form-check mb-2" th:each="item : ${orderItems}">
+                                            <input class="form-check-input" type="checkbox" name="orderItemIds"
+                                                   th:value="${item.id}" th:id="'item-' + ${item.id}">
+                                            <label class="form-check-label" th:for="'item-' + ${item.id}">
+                                                <strong th:text="${item.productName}">Product Name</strong>
+                                                - Qty: <span th:text="${item.quantity}">10</span>
+                                                <span th:if="${item.unitPrice}" class="text-muted">
+                                                    (₹ <span th:text="${#numbers.formatDecimal(item.unitPrice, 0, 2)}">5,000.00</span>/unit)
+                                                </span>
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <div th:unless="${orderItems.size() > 0}" class="text-muted text-center py-3">
+                                        No order items available
+                                    </div>
+                                </div>
+                                <small class="form-text text-muted">Select at least one item to include in the purchase order</small>
+                            </div>
+                            <div class="mb-3">
+                                <label for="poNotes" class="form-label">Notes</label>
+                                <textarea id="poNotes" name="notes" class="form-control" rows="3"></textarea>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                            <button type="submit" class="btn btn-success">Create Purchase Order</button>
+                        </div>
+                    </form>
                 </div>
             </div>
         </div>

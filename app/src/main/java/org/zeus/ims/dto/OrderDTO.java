@@ -4,7 +4,7 @@ import org.springframework.format.annotation.DateTimeFormat;
 import org.zeus.ims.entity.Order;
 import org.zeus.ims.validation.CreateOrder;
 import org.zeus.ims.validation.UpdateOrder;
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotNull;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;

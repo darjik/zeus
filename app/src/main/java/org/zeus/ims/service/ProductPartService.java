@@ -14,7 +14,7 @@ import org.zeus.ims.repository.ProductPartRepository;
 import org.zeus.ims.repository.ProductRepository;
 import org.zeus.ims.repository.VendorRepository;
 
-import javax.persistence.EntityNotFoundException;
+import jakarta.persistence.EntityNotFoundException;
 import java.util.List;
 import java.util.stream.Collectors;
 

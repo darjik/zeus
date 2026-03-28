@@ -4,9 +4,9 @@ import org.springframework.format.annotation.DateTimeFormat;
 import org.zeus.ims.validation.CreateEnquiry;
 import org.zeus.ims.validation.UpdateEnquiry;
 
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Size;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;

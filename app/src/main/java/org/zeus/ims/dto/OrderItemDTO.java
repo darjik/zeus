@@ -14,6 +14,7 @@ public class OrderItemDTO {
     private BigDecimal totalPrice;
     private String specifications;
     private String notes;
+    private String productStatus;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
@@ -91,6 +92,14 @@ public class OrderItemDTO {
 
     public void setNotes(String notes) {
         this.notes = notes;
+    }
+
+    public String getProductStatus() {
+        return productStatus;
+    }
+
+    public void setProductStatus(String productStatus) {
+        this.productStatus = productStatus;
     }
 
     public LocalDateTime getCreatedAt() {

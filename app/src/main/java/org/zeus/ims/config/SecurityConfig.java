@@ -4,24 +4,23 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
-import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
+import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
+import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.session.SessionRegistry;
 import org.springframework.security.core.session.SessionRegistryImpl;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.security.web.session.HttpSessionEventPublisher;
 import org.zeus.ims.service.CustomUserDetailsService;
 
 @Configuration
 @EnableWebSecurity
-@EnableGlobalMethodSecurity(prePostEnabled = true)
-public class SecurityConfig extends WebSecurityConfigurerAdapter {
+public class SecurityConfig {
 
     private final CustomUserDetailsService userDetailsService;
 
@@ -33,12 +32,6 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
-    }
-
-    @Bean
-    @Override
-    public AuthenticationManager authenticationManagerBean() throws Exception {
-        return super.authenticationManagerBean();
     }
 
     @Bean
@@ -56,22 +49,31 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
         return new HttpSessionEventPublisher();
     }
 
-    @Override
-    protected void configure(AuthenticationManagerBuilder auth) throws Exception {
-        auth.userDetailsService(userDetailsService).passwordEncoder(passwordEncoder());
+    @Bean
+    public DaoAuthenticationProvider authenticationProvider() {
+        DaoAuthenticationProvider provider = new DaoAuthenticationProvider();
+        provider.setUserDetailsService(userDetailsService);
+        provider.setPasswordEncoder(passwordEncoder());
+        return provider;
     }
 
-    @Override
-    protected void configure(HttpSecurity http) throws Exception {
+    @Bean
+    public AuthenticationManager authenticationManager(AuthenticationConfiguration authenticationConfiguration) throws Exception {
+        return authenticationConfiguration.getAuthenticationManager();
+    }
+
+    @Bean
+    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-            .authorizeRequests()
-                .antMatchers("/css/**", "/js/**", "/images/**", "/webjars/**").permitAll()
-                .antMatchers("/login", "/forgot-password", "/session-expired").permitAll()
-                .antMatchers("/users/**").hasAnyAuthority("OWNER", "ADMIN")
-                .antMatchers("/admin/**").hasAuthority("OWNER")
+            .authenticationProvider(authenticationProvider())
+            .authorizeHttpRequests(authorize -> authorize
+                .requestMatchers("/", "/login", "/forgot-password", "/session-expired").permitAll()
+                .requestMatchers("/css/**", "/js/**", "/images/**", "/webjars/**").permitAll()
+                .requestMatchers("/users/**").hasAnyAuthority("OWNER", "ADMIN")
+                .requestMatchers("/admin/**").hasAuthority("OWNER")
                 .anyRequest().authenticated()
-            .and()
-            .formLogin()
+            )
+            .formLogin(form -> form
                 .loginPage("/login")
                 .loginProcessingUrl("/login")
                 .successHandler(customAuthenticationSuccessHandler())
@@ -79,36 +81,35 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 .usernameParameter("username")
                 .passwordParameter("password")
                 .permitAll()
-            .and()
-            .logout()
+            )
+            .logout(logout -> logout
                 .logoutUrl("/logout")
                 .logoutSuccessUrl("/login?logout=true")
                 .invalidateHttpSession(true)
                 .deleteCookies("JSESSIONID")
                 .clearAuthentication(true)
                 .permitAll()
-            .and()
-            .sessionManagement()
-                .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
-                .maximumSessions(3) // Allow up to 3 concurrent sessions per user
-                .maxSessionsPreventsLogin(false)
-                .expiredUrl("/login?expired=true")
-                .sessionRegistry(sessionRegistry())
-                .and()
-                .sessionFixation().changeSessionId()
-                .invalidSessionUrl("/login?invalid=true")
-            .and()
-            .rememberMe()
+            )
+            .rememberMe(remember -> remember
                 .key("zeusImsRememberMeKey")
-                .tokenValiditySeconds(1800) // 30 minutes
+                .tokenValiditySeconds(1800)
                 .userDetailsService(userDetailsService)
-            .and()
-            .csrf()
-                .ignoringAntMatchers("/api/**")
-            .and()
-            .headers()
-                .frameOptions().deny()
-                .httpStrictTransportSecurity(hstsConfig -> hstsConfig
-                    .maxAgeInSeconds(31536000));
+            )
+            .csrf(csrf -> csrf.ignoringRequestMatchers("/api/**"))
+            .headers(headers -> headers
+                .frameOptions(frameOptions -> frameOptions.deny())
+                .httpStrictTransportSecurity(hsts -> hsts.maxAgeInSeconds(31536000))
+            )
+            .sessionManagement(session -> {
+                session.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED);
+                session.sessionFixation(sessionFixation -> sessionFixation.changeSessionId());
+                session.invalidSessionUrl("/login?invalid=true");
+                var concurrencyConfigurer = session.maximumSessions(3);
+                concurrencyConfigurer.maxSessionsPreventsLogin(false);
+                concurrencyConfigurer.expiredUrl("/login?expired=true");
+                concurrencyConfigurer.sessionRegistry(sessionRegistry());
+            });
+
+        return http.build();
     }
 }

@@ -1,18 +1,24 @@
 package org.zeus.ims.entity;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.FetchType;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
-import javax.persistence.JoinColumn;
-import javax.persistence.ManyToOne;
-import javax.persistence.PrePersist;
-import javax.persistence.PreUpdate;
-import javax.persistence.Table;
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.PreUpdate;
+import jakarta.persistence.Table;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "order_items")
@@ -45,6 +51,13 @@ public class OrderItem {
     @Column(columnDefinition = "TEXT")
     private String notes;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "product_status")
+    private ProductStatus productStatus = ProductStatus.PENDING;
+
+    @OneToMany(mappedBy = "orderItem", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<OrderItemPart> parts = new ArrayList<>();
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
@@ -76,6 +89,25 @@ public class OrderItem {
     private void calculateTotalPrice() {
         if (this.unitPrice != null && this.quantity != null) {
             this.totalPrice = this.unitPrice.multiply(BigDecimal.valueOf(this.quantity));
+        }
+    }
+
+    public enum ProductStatus {
+        PENDING("Pending"),
+        PROCURING("Procuring"),
+        IN_ASSEMBLY("In Assembly"),
+        IN_POWDER_COATING("In Powder Coating"),
+        READY("Ready"),
+        PACKED("Packed");
+
+        private final String displayName;
+
+        ProductStatus(String displayName) {
+            this.displayName = displayName;
+        }
+
+        public String getDisplayName() {
+            return displayName;
         }
     }
 
@@ -143,6 +175,32 @@ public class OrderItem {
 
     public void setNotes(String notes) {
         this.notes = notes;
+    }
+
+    public ProductStatus getProductStatus() {
+        return productStatus;
+    }
+
+    public void setProductStatus(ProductStatus productStatus) {
+        this.productStatus = productStatus;
+    }
+
+    public List<OrderItemPart> getParts() {
+        return parts;
+    }
+
+    public void setParts(List<OrderItemPart> parts) {
+        this.parts = parts;
+    }
+
+    public void addPart(OrderItemPart part) {
+        parts.add(part);
+        part.setOrderItem(this);
+    }
+
+    public void removePart(OrderItemPart part) {
+        parts.remove(part);
+        part.setOrderItem(null);
     }
 
     public LocalDateTime getCreatedAt() {

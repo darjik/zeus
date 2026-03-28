@@ -1,6 +1,6 @@
 package org.zeus.ims.entity;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
 @Entity
